@@ -30,13 +30,7 @@ var modes_reg = {
   xk_system: /\/\/xk.nju.edu.cn/i, // 选课系统 xk.nju.edu.cn 的其它界面
 
   course_eval: /evalcourse\/courseEval.do\?method=currentEvalCourse/i, // 课程评估
-
-  all_course_list: /teachinginfo\/allCourseList.do\?method=getTermAcademy/i, // 全校课程
   grade_info: /student\/studentinfo\/achievementinfo.do\?method=searchTermList/i, // 成绩查看
-  course_info: /courseList.do\?method=getCourseInfoM/i, // 课程详细信息
-
-  main_page: /(\/jiaowu\/student\/index.do|\/jiaowu\/login.do)/i, // 主页
-
 }
 
 let pjw_mode = "";

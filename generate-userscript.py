@@ -25,7 +25,6 @@ prefix = '''// ==UserScript==
 // @author       Limos
 // @match        *://*.nju.edu.cn/jiaowu*
 // @match        *://xk.nju.edu.cn/*
-// @match        *://219.219.120.46/jiaowu*
 // @run-at       document-start
 // @grant        none
 // @updateURL    {}

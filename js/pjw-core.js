@@ -92,10 +92,6 @@ window.potatojw_intl = function() {
   `;
 
   if (pjw.site == "jw") {
-    if (pjw.data.login_settings?.share_stats == true) {
-      $$("head").append($$(google_analytics_js));
-    }
-
     if ($$("#Function").length) {
       $$("#Function").addClass("light");
       $$("#Function").find("li").on("click", (e) => {
@@ -109,11 +105,6 @@ window.potatojw_intl = function() {
           <div id="pjw-user-type">${$$("#UserInfo").html().slice(4).match(/：.*/)[0].slice(1)}</div>
         </div>
       `);
-      pjw.preferences.privilege && $$("#pjw-user-type").html(pjw.preferences.privilege); 
-      $$("#pjw-user-type").on("click", (e) => { if (window.click_count) {window.click_count++;}
-        else {window.click_count = 1; setTimeout(() => {delete click_count;}, 2000);} if (window.click_count >= 5) { window.click_count = 0; (pjw.preferences.privilege && delete pjw.preferences.privilege && $$("#pjw-user-type").html("学生")) || ((pjw.preferences.privilege = "root") && $$("#pjw-user-type").html(pjw.preferences.privilege))};
-        e.stopPropagation();
-      });
       $$("#TopLink").children("img").remove();
       if ($$(".Line").length) {
         $$("table").find("tr").each((index, obj) => {
@@ -139,26 +130,7 @@ window.potatojw_intl = function() {
     }
     
     if ($$("div#TopLink").length > 0) {
-      $$("div#TopLink").html(`<span class="pjw-mini-button" onclick="window.open('https://cubiccm.ddns.net/potatoplus')">v${pjw.version}</span>
-        <span class="pjw-mini-button" id="pjw-logout-button" onclick="window.location.href='exit.do?type=student'">退出登录</span>`);
-    }
-    
-    window.reset_storage_confirm = false;
-    window.reset_storage_timeout = 0;
-    window.resetStorage = function() {
-      if (reset_storage_confirm) {
-        pjw.data.clear();
-        reset_storage_confirm = false;
-        $$("#reset_storage").html("重置存储");
-        clearInterval(reset_storage_timeout);
-      } else {
-        $$("#reset_storage").html("确定重置 PotatoPlus 的全部存储？");
-        reset_storage_confirm = true;
-        reset_storage_timeout = setTimeout(() => {
-          $$("#reset_storage").html("重置存储");
-          reset_storage_confirm = false;
-        }, 2000);
-      }
+      $$("div#TopLink").html(`<span class="pjw-mini-button" onclick="window.open('https://cubiccm.ddns.net/potatoplus')">v${pjw.version}</span>`);
     }
   } else if (pjw.site == "xk") {
     pjw.preferences.enabled && pjw.preferences.share_usage_data && $("head").append($(google_analytics_js));
@@ -172,14 +144,6 @@ window.potatojw_intl = function() {
     course_eval: `
       <span class="pjw-mini-button" onclick="toggleAutoEval();" id="toggle_auto_eval_button">开启自动评价</span>
       <span>开启后，点一下对应课程即自动五星好评。</span>
-    `,
-    login_page: `
-      <input type="checkbox" id="store_login_info" class="login_settings" checked="checked">
-      <label for="store_login_info">记住登录信息</label>
-      <input type="checkbox" id="solve_captcha" class="login_settings" checked="checked">
-      <label for="solve_captcha">验证码识别</label>
-      <input type="checkbox" id="share_stats" class="login_settings" checked="checked">
-      <label for="share_stats">发送匿名统计数据</label>
     `,
   };
 
@@ -265,7 +229,7 @@ window.potatojw_intl = function() {
   }
 
   // Initialize ClassList
-  const pjw_classlist_mode_list = ["dis_view", "art_view", "open_view", "all_course_list", "dis", "open", "common", "public", "read_view", "gym", "read", "grade_info", "public_view", "union", "course", "art"];
+  const pjw_classlist_mode_list = ["grade_info", "course"];
   if (pjw_classlist_mode_list.includes(pjw.mode)) {
     ClassListPlugin();
   }
@@ -313,126 +277,7 @@ window.potatojw_intl = function() {
     }
   }
 
-  if (pjw.mode == "main_page") {
-    window.pconsole = new PJWConsole();
-    if (typeof(window.alert_data) != "undefined") {
-      pconsole.alert(window.alert_data);
-    }
-    
-    $$("div#TopLink").prepend(`<span class="pjw-mini-button" style="color: gray; opacity: 0.7;" onclick="resetStorage();" id="reset_storage">重置存储</span>`);
-
-    var update_html = "";
-    if (pjw.platform == "Userscript") {
-      update_html = `<a href="https://github.com/cubiccm/potatoplus/releases/latest/download/potatoplus.user.js">&gt; 获取更新 - Userscript</a><br><br>PotatoPlus 浏览器扩展已经在<a href="https://chrome.google.com/webstore/detail/potatoplus/mokphlegfcilcbnjmhgfikjgnbnconba" target="_blank">Chrome网上应用店</a>和<a href="https://microsoftedge.microsoft.com/addons/detail/potatoplus/miofoebmeohjbieochdmaolpaneapmib" target="_blank">Microsoft Edge Add-ons</a>上线，您也可以可以到<a href="https://github.com/cubiccm/potatoplus/releases/latest/download/PotatoPlus.xpi" target="_blank">GitHub Releases</a>获取适用于 Firefox 浏览器的插件。迁移到插件版本会在部分功能上获得更好的体验；安装插件前请先关闭当前 Userscript 的执行。`;
-    } else if (pjw.platform == "General Plugin") {
-      update_html = `您所安装的版本可能不支持自动更新，请访问<a href="https://github.com/cubiccm/potatoplus/releases/latest/" target="_blank">GitHub Releases</a>页面检查及获取更新。`;
-    }
-
-    var welcome_html = `
-      <div id="pjw-welcome" class="pjw-card">
-        <p style="display: flex; flex-direction: row; align-items: flex-start;"><span class="material-icons-round">done</span><span>&nbsp;&nbsp;</span><span>${pjw.version_description}</span></p>
-        <p style="display: flex; flex-direction: row; align-items: flex-start;"><span class="material-icons-round">contactless</span><span>&nbsp;&nbsp;</span><span id="pjw-bulletin-content">${pjw.data.bulletin_content || ""}</span></p>
-        <br>
-        <div class="pjw-welcome-get-update">${update_html}</div>
-        <note>
-          <a href="https://cubiccm.ddns.net/potatoplus" target="_blank" style="margin-left: 0;">PotatoPlus ${pjw.version}</a>
-          <a href="https://github.com/cubiccm/potatoplus" target="_blank">GitHub</a>
-          <a href="https://cubiccm.ddns.net/potato-mailing-list/" target="_blank">加入邮件列表</a>
-          <a href="mailto:illimosity@gmail.com">发送反馈邮件</a>
-          <a href="https://cubiccm.ddns.net/about" target="_blank">@Limos</a>
-        </note>
-      </div>
-    `;
-
-    const cn_days_name = ["日", "一", "二", "三", "四", "五", "六"];
-
-    var calcCurrentWeek = () => {
-      const fall_sem = new Date(new Date("2022-09-05").getTime() - 8 * 3600000);
-      const fall_exam = new Date(new Date("2022-12-26").getTime() - 8 * 3600000);
-      const winter_holiday = new Date(new Date("2023-01-09").getTime() - 8 * 3600000);
-      const spring_sem = new Date(new Date("2023-02-13").getTime() - 8 * 3600000);
-      const spring_exam = new Date(new Date("2023-06-12").getTime() - 8 * 3600000);
-      const summer_school = new Date(new Date("2023-06-26").getTime() - 8 * 3600000);
-      const summer_holiday = new Date(new Date("2023-07-24").getTime() - 8 * 3600000);
-      const next_sem = new Date(new Date("2023-08-28").getTime() - 8 * 3600000); // Estimated
-      const today = new Date();
-      if (today < fall_sem)
-        return `秋季学期将开始于 ${fall_sem.toDateString()}`;
-      else if (today < fall_exam)
-        return `秋季学期第<num>${Math.ceil((today - fall_sem + 1) / (7 * 24 * 60 * 60 * 1000))}</num>周`;
-      else if (today < winter_holiday)
-        return "考试周";
-      else if (today < spring_sem - 7 * 24 * 3600000)
-        return "寒假";
-      if (today < spring_sem)
-        return `春季学期将开始于 ${spring_sem.toDateString()}`;
-      else if (today < spring_exam)
-        return `春季学期第<num>${Math.ceil((today - spring_sem + 1) / (7 * 24 * 60 * 60 * 1000))}</num>周`;
-      else if (today < summer_school)
-        return "考试周";
-      else if (today < summer_holiday)
-        return "暑期学校";
-      else if (today < next_sem)
-        return "暑假";
-      else
-        return "查看教学周历";
-    }
-
-    const date_html = `
-      <heading>${new Date().getMonth() + 1}月${new Date().getDate()}日 星期${cn_days_name[new Date().getDay()]}</heading><br>
-      <subheading><a href="https://jw.nju.edu.cn/qxnjxxl/list.htm" target="_blank" style="margin-left: 0;">${calcCurrentWeek()}</a></subheading>`
-    ;
-
-    const menu_html = `
-      <div id="pjw-menu" class="pjw-card">
-        ${date_html}
-        <br>
-        <br>
-        <div data-mdc-auto-init="MDCRipple" class="mdc-button mdc-button--raised pjw-menu-button" style="background-color: rgb(30, 50, 180);" data-link="/jiaowu/student/teachinginfo/courseList.do?method=currentTermCourse">
-          <div class="mdc-button__ripple"></div>
-          <i class="material-icons-round">today</i>
-          <div class="mdc-button__label">本学期课程</div>
-          <div data-mdc-auto-init="MDCRipple" class="mdc-button mdc-button--raised pjw-menu-button pjw-menu-button--inserted" style="background-color: white; color: rgb(30, 50, 180);" data-link="https://xk.nju.edu.cn/">
-            <div class="mdc-button__ripple"></div>
-            <i class="material-icons-round">add</i>
-            <div class="mdc-button__label">选课</div>
-          </div>
-        </div>
-
-        <div data-mdc-auto-init="MDCRipple" class="mdc-button mdc-button--raised pjw-menu-button" style="background-color: rgba(255, 255, 255, .3);" data-link="/jiaowu/student/studentinfo/achievementinfo.do?method=searchTermList">
-          <div class="mdc-button__ripple"></div>
-          <i class="material-icons-round">calculate</i>
-          <div class="mdc-button__label">成绩</div>
-        </div>
-
-        <div data-mdc-auto-init="MDCRipple" class="mdc-button mdc-button--raised pjw-menu-button" style="background-color: rgba(255, 255, 255, .3);" data-link="/jiaowu/student/speccheck/specCheckSpecApply.do?method=printYearCheckResult">
-          <div class="mdc-button__ripple"></div>
-          <i class="material-icons-round">verified</i>
-          <div class="mdc-button__label">学业审核</div>
-        </div>
-        <br>
-        <br>
-      </div>
-    `;
-
-    getBulletin();
-    
-    $$("#Function").before(menu_html);
-    $$("#pjw-menu").append($$("#Function"));
-    $$("#Function:eq(1)").remove();
-    $$("#Function").addClass("main-page-function");
-    
-    $$(".Line").before(welcome_html);
-    $$(".Line").remove();
-    
-    $$(".pjw-menu-button").on("click", (e) => {
-      e.stopPropagation();
-      var target = $$(e.delegateTarget);
-      if (target.attr("data-link"))
-        window.location.href = target.attr("data-link");
-    });
-    window.mdc.autoInit();
-  } else if (pjw.mode == "welcome") {
+  if (pjw.mode == "welcome") {
     const pjw_options_html = `
     <div class="pjw-xk-welcome-wrapper">
       <div class="pjw-xk-welcome-option">
@@ -765,434 +610,6 @@ window.potatojw_intl = function() {
         $$("#toggle_auto_eval_button").html("停用自动评价");
       }
     };
-  } else if (pjw.mode == "all_course_list") {
-    // if ($$("#termList > option:eq(1)").val() != "20222")
-    //   $$("#termList > option:eq(1)").before('<option value="20222">*2022-2023学年第二学期</option>');
-    $$("#termList > option:eq(1)").before('<option value="pjw_custom_term">*自定学期...</option>');
-
-    window.list = new PJWClassList($$("body"), ["acl_major_switch", "hours", "advanced", "frozen"]);
-    total_weeks_history = {
-      "20222": 17,
-      "20221": 16,
-      "20212": 17,
-      "20211": 17,
-      "20202": 16,
-      "20201": 17,
-      "20192": 17,
-      "20191": 17,
-      "20182": 16,
-      "20181": 17,
-      "20172": 16,
-      "20171": 18
-    };
-
-    list.parse = function(data) {
-      return new Promise((resolve, reject) => {
-        try {
-          $$("body").append("<div id='ghost-div' style='display:none;'>" + data + "</div>");
-          var table = $$("#ghost-div").find("table.TABLE_BODY > tbody");
-          table.find("tr:gt(0)").each((index, val) => {
-            var td = (i) => ($$(val).children(`td:eq(${i})`));
-            var res = this.parseClassTime(td(8).html());
-            data = {
-              title: td(1).html(),
-              teachers: this.parseTeacherNames(td(7).html()),
-              course_number: this.parseClassNumber(td(0)),
-              info: [{
-                key: "课程编号",
-                val: this.parseClassNumber(td(0))
-              }, {
-                key: "开课院系",
-                val: td(3).html()
-              }, {
-                key: "课程性质",
-                val: td(2).html()
-              }, {
-                key: "校区",
-                val: td(6).html(),
-                hidden: true
-              }],
-              num_info: [{
-                num: parseInt(td(4).html()),
-                label: "学分"
-              }, {
-                num: parseInt(td(5).html()),
-                label: "学时"
-              }],
-              lesson_time: res.lesson_time,
-              time_detail: td(8).html(),
-              places: res.places,
-              class_weeknum: res.class_weeknum,
-              select_button: {
-                status: false
-              }
-            };
-            list.add(data);
-          });
-          list.update();
-          $$("#ghost-div").remove();
-          resolve();
-        } catch(e) {
-          reject(e);
-        }
-      });
-    }
-
-    list.load = function() {
-      return new Promise((resolve, reject) => {
-        var sel = this.selectors;
-        var major_code;
-        if (sel.institution.obj.selectedIndex == 0)
-          major_code = "";
-        else
-          major_code = sel.major.val();
-        this.ajax_request = $$.ajax({
-          type: "GET",
-          url: "/jiaowu/student/teachinginfo/allCourseList.do",
-          data: {
-            method: "getCourseList",
-            curTerm: sel.term.val(),
-            curGrade: sel.grade.val(),
-            curSpeciality: major_code
-          }
-        }).done((data) => {
-          this.ajax_request = null;
-          this.setTotalWeeks(total_weeks_history[sel.term.val()] || 18);
-          this.parse(data);
-          resolve();
-        }).fail((jqXHR, textStatus) => {
-          reject(`${textStatus} (${jqXHR.status})`);
-        });
-      });
-    }
-
-    $$("#academySelect > option:eq(0)").html("全部院系");
-    $$("#academySelect > option:eq(0)").val("00");
-    $$("#academySelect > option:eq(29)").after(`<option value="30">人工智能学院</option>`);
-    academySelectgroup.splice(30, 0, [$$(`<option value="301">计算机科学与技术（人工智能方向）</option>`)[0], $$(`<option value="302">人工智能</option>`)[0]]);
-
-    list.selectors = {
-      term: new PJWSelect(list, "termList", "学期", list.heading.children(".pjw-classlist-selectors"), 1, 1),
-      grade: new PJWSelect(list, "gradeList", "年级", list.heading.children(".pjw-classlist-selectors")),
-      institution: new PJWSelect(list, "academySelect", "院系", list.heading.children(".pjw-classlist-selectors"), 0),
-      major: new PJWSelect(list, "specialitySelect", "专业", list.heading.children(".pjw-classlist-selectors"))
-    };
-
-    $$("table").remove();
-
-    window.reloadMajor = function() {
-      list.selectors.major.clear();  
-      for (var item of academySelectgroup[parseInt(list.selectors.institution.obj.selectedIndex)]) {
-        if (item.value != "")
-          list.selectors.major.addItem(item);
-      }
-      list.selectors.major.obj.layoutOptions();
-    };
-
-    // 自动获取年级及专业
-    function autofillInfo() {
-      const stu_info = pjw.data.stu_info;
-      if (!stu_info) return;
-      const stu_grade = stu_info.grade, stu_dept = stu_info.department, stu_major = stu_info.major;
-      const sel = list.selectors;
-      sel.grade.setByText(stu_grade);
-      sel.institution.setByText("全部课程");
-      list.selectors.major.dom.hide();
-      // sel.institution.setByText(stu_dept);
-      reloadMajor();
-      // sel.major.setByText(stu_major);
-      list.refresh();
-      fillCompleted();
-      $$("#acl-major-switch-label").html(`${stu_dept} > ${stu_major}`);
-      $$(".acl-major-switch-button").on("click", null, {
-        dept: stu_dept,
-        major: stu_major
-      }, (e) => {
-        sel.institution.setByText(e.data.dept);
-        sel.major.setByText(e.data.major);
-        list.refresh(true);
-      }).css("display", "inline-block");
-    }
-
-    function fillCompleted() {
-      list.selectors.term.onchange( (e) => { list.refresh(true); } );
-      list.selectors.grade.onchange( (e) => { list.refresh(true); } );
-      list.selectors.major.onchange( (e) => { 
-        if (e.detail.index == -1) return;
-        list.refresh(true);
-      } );
-      list.selectors.institution.onchange( (e) => {
-        if (list.selectors.institution.obj.selectedIndex == 0) {
-          list.selectors.major.dom.hide();
-          list.clear();
-          list.refresh(true);
-          return;
-        } else {
-          list.selectors.major.dom.show();
-          reloadMajor();
-          list.selectors.major.obj.selectedIndex = 0;
-        }
-      });
-    }
-
-    if (Date.now() - (pjw.data.stu_info?.last_update || 0) < 3 * 24 * 3600 * 1000) {
-      autofillInfo();
-    } else {
-      $$.ajax({
-        url: "/jiaowu/student/studentinfo/studentinfo.do?method=searchAllList",
-        type: "POST"
-      }).done(function(res) {
-        window.aux_data = $$(res);
-        var stu_grade = aux_data.find("div#d11 > form > table > tbody > tr:eq(4) > td:eq(3)").html();
-        var stu_dept = aux_data.find("div#d11 > form > table > tbody > tr:eq(3) > td:eq(1)").html();
-        var stu_major = aux_data.find("div#d11 > form > table > tbody > tr:eq(3) > td:eq(3)").html();
-        pjw.data.stu_info = {grade: stu_grade, department: stu_dept, major: stu_major, last_update: Date.now()};
-        autofillInfo();
-      }).fail(() => {
-        reloadMajor();
-        fillCompleted();
-      });
-    }
-  } else if (pjw.mode == "union") {
-    var modes_map = [
-      {"name": "通识课补选", "mode": "dis", "func": "dis_public"},
-      {"name": "公选课补选", "mode": "public", "func": "dis_public"},
-      {"name": "跨院系补选", "mode": "open"},
-      // {"name": "悦读经典初选", "mode": "read_view"},
-      {"name": "悦读经典补选", "mode": "read"},
-      {"name": "通修课补选", "mode": "common"},
-      // {"name": "通识课初选", "mode": "dis_view", "func": "dis_public_view"},
-      // {"name": "公选课初选", "mode": "public_view", "func": "dis_public_view"},
-      // {"name": "跨院系初选", "mode": "open_view"},
-      {"name": "美育补选", "mode": "art", "func": "dis_public"},
-      {"name": "体育选课", "mode": "gym"},
-    ];
-    var options_html = "";
-    for (var item of modes_map) {
-      options_html += `<div data-mode="${item.mode}" data-func="${item.func || ""}" class="pjw-mini-button pjw-mode-switcher-button">${item.name}</div>`;
-    }
-    var union_panel_html = `
-      <div class="pjw-card" id="pjw-union-panel">
-        <subheading>聚合选课 Beta</subheading>
-        <div>${options_html}</div>
-      </div>
-      <div id="pjw-union-listcontainer"></div>
-    `;
-    $$("#Function").after(union_panel_html);
-    last_selected_mode = null;
-    $$(".pjw-mode-switcher-button").on("click", function() {
-      if (!window.list) {
-        $$("#Function").hide();
-        window.list = new PJWClassList($$("#pjw-union-listcontainer"));
-      } else {
-        $$(".pjw-classlist-selectors").html("");
-      }
-      if (last_selected_mode) {
-        last_selected_mode.css("color", "");
-        last_selected_mode.removeClass("keep-hover");
-      }
-      $$(this).css("color", "#0058ff");
-      $$(this).addClass("keep-hover");
-      last_selected_mode = $$(this);
-      var mode = $$(this).attr("data-mode");
-      window.pjw_select_mode = mode;
-      var func = $$(this).attr("data-func") || mode;
-      class_select_funcs[func]();
-    });
-  } else if (pjw.mode == "gym") {
-    enterMode("gym");
-  } else if (pjw.mode == "read") {
-    enterMode("read");
-  } else if (pjw.mode == "read_view") {
-    enterMode("read_view");
-  } else if (pjw.mode == "common") {
-    enterMode("common");
-  } else if (pjw.mode == "dis" || pjw.mode == "public" || pjw.mode == "art") {
-    enterMode("dis_public");
-  } else if (pjw.mode == "dis_view" || pjw.mode == "public_view" || pjw.mode == "art_view") {
-    enterMode("dis_public_view");
-  } else if (pjw.mode == "open") {
-    enterMode("open");
-  } else if (pjw.mode == "open_view") {
-    enterMode("open_view");
-  } else if (pjw.mode == "login_page") {
-    $$("body").prepend(`
-      <div id="pjw-login-mask" style="position: fixed; top: 0; left: 0; height: 100%; width: 100%; background-color: rgba(0, 0, 0, .2); display: flex; align-items: center; justify-content: center; z-index: 1000;">
-      <div style="display: flex; flex-direction: column; align-items: center; border-radius: 30px; background-color: white; padding: 30px 20px;">
-        <form action="login.do" method="POST" style="display: flex; flex-direction: column; align-items: flex-start;" id="pjw-login-form">
-        <h1 style="margin-left: 10px;">欢迎回来</h1>
-
-        <div class="mdc-text-field mdc-text-field--filled pjw-login-field" data-mdc-auto-init="MDCTextField">
-          <span class="mdc-text-field__ripple"></span>
-          <span class="mdc-floating-label" id="pjw-login-username-label">用户名</span>
-          <input class="mdc-text-field__input" name="userName" type="text" aria-labelledby="pjw-login-username-label" placeholder=" " required="required">
-          <span class="mdc-line-ripple"></span>
-        </div>
-
-        <div class="mdc-text-field mdc-text-field--filled pjw-login-field" data-mdc-auto-init="MDCTextField">
-          <span class="mdc-text-field__ripple"></span>
-          <span class="mdc-floating-label" id="pjw-login-password-label">密码</span>
-          <input class="mdc-text-field__input" name="password" type="password" aria-labelledby="pjw-login-password-label" placeholder=" " required="required">
-          <span class="mdc-line-ripple"></span>
-        </div>
-
-        <div style="margin: 30px 0;">
-          <button data-mdc-auto-init="MDCRipple" class="mdc-button mdc-button--raised pjw-login-button" id="pjw-login-submit-button" onclick="submitLoginForm();" type="button" disabled="disabled">
-            <div class="mdc-button__ripple"></div>
-            <span class="material-icons-round">login</span>
-            <div class="mdc-button__label" style="margin-left: 8px;">登录</div>
-          </button>
-
-          <button data-mdc-auto-init="MDCRipple" class="mdc-button mdc-button--raised pjw-login-button" style="background-color: #63065f;" type="button" onclick="casLogin();">
-            <div class="mdc-button__ripple"></div>
-            <span class="material-icons-round">open_in_new</span>
-            <div class="mdc-button__label" style="margin-left: 16px;">统一认证</div>
-          </button>
-        </div>
-
-        <input type="hidden" name="returnUrl" value="/jiaowu/student/index.do">
-        <input type="hidden" name="ValidateCode">
-
-        </form>
-        <div style="display: flex; align-items: center; justify-content: space-between; flex-direction: row; margin-bottom: 10px;">
-          <canvas id="pjw-login-mask-canvas" width="80", height="20">Canvas is not supported in your browser.</canvas>
-          <button data-mdc-auto-init="MDCRipple" id="pjw-login-mask-refresh-captcha" class="mdc-button" style="color: rgba(0, 0, 0, .5); margin-left: 20px;" onclick="RefreshValidateImg('ValidateImg');" disabled="disabled">
-            <div class="mdc-button__ripple"></div>
-            <div class="mdc-button__label" id="pjw-captcha-result">刷新验证码</div>
-          </button>
-        </div>
-        <button data-mdc-auto-init="MDCRipple" class="mdc-button" style="color: rgba(0, 0, 0, .5);" onclick="closeLoginMask();">
-          <div class="mdc-button__ripple"></div>
-          <div class="mdc-button__label">关闭</div>
-        </button>
-      </div>
-      </div>
-    `);
-    $$("body").on("keypress", (e) => {
-      if (!window.login_mask_closed)
-        if (e.which == 13 || e.keyCode == 13)
-          submitLoginForm();
-    });
-    $$("#pjw-login-mask").append($$("#pjw-toolbar"));
-
-    window.submitLoginForm = function() {
-      var username = $$("#pjw-login-form").find("input[name=userName]").val();
-      var password = $$("#pjw-login-form").find("input[name=password]").val();
-      if (!username && !password) {
-        casLogin();
-        return;
-      }
-      if (!username || !password) return;
-      if (login_settings["store_login_info"]) {
-        var login_info = {
-          username: username,
-          password: password
-        }
-        pjw.data.login_info = login_info;
-      }
-      $$("#pjw-login-form").submit();
-    }
-
-    window.closeLoginMask = function() {
-      $$("body").append($$("#pjw-toolbar"));
-      $$("#pjw-login-mask").remove();
-      window.login_mask_closed = true;
-    }
-
-    // Load login settings
-    window.login_settings = {};
-    function updateLoginSettings(write = false) {
-      login_settings = pjw.preferences.login_settings || {};
-      $$(".login_settings").each(function() {
-        const t = $$(this);
-        if (t.attr("id") in login_settings) {
-          if (write)
-            login_settings[t.attr("id")] = t.prop("checked");
-          else
-            t.prop("checked", login_settings[t.attr("id")]);
-        } else {
-          login_settings[t.attr("id")] = t.prop("checked");
-        }
-      });
-      pjw.preferences.login_settings = login_settings;
-      if (login_settings["solve_captcha"] == false)
-        closeLoginMask();
-      if (!write) return login_settings;
-
-      if (login_settings["store_login_info"] == false)
-        delete pjw.data.login_info
-      if (login_settings["solve_captcha"] == true && $$("#ValidateCode").val().length == 0)
-        fillCAPTCHA();
-      return login_settings;
-    }
-
-    login_settings = updateLoginSettings();
-    $$(".login_settings").on("change", function() { updateLoginSettings(true); });
-
-    // Username & password auto-fill
-    if (login_settings["store_login_info"] == true && pjw.data.login_info !== null) {
-      if ($$("input[name=userName]").val().length == 0)
-        $$("input[name=userName]").val(pjw.data.login_info.username);
-      if ($$("input[name=password]").val().length == 0)
-        $$("input[name=password]").val(pjw.data.login_info.password);
-    }
-    const checkLogin = function() {
-      login_settings = pjw.preferences.login_settings;
-      if (CheckForm()) {
-        if (login_settings["store_login_info"] == true) {
-          const login_info = {
-            username: $$("input[name=userName]").val(),
-            password: $$("input[name=password]").val()
-          }
-          pjw.data.login_info = login_info;
-        }
-        return true;
-      } else {
-        return false;
-      }
-    }
-    $$("#Wrapper").find("form[action=\"login.do\"]").attr("onsubmit", "");
-    $$("#Wrapper").find("form[action=\"login.do\"]").on("submit", checkLogin);
-
-    $$("input[name=returnUrl]").val("/jiaowu/student/index.do");
-    $$("input[type=submit]").after("<br><span id=\"pjw-login-helper-label\"></span>");
-
-    // CAPTCHA auto-fill
-    CAPTCHAPlugin();
-
-    let min_certainty = 14;
-
-    function fillCAPTCHA() {
-      if (!pjw.data.login_settings?.["solve_captcha"]) return;
-      $$("#pjw-captcha-result").html("正在识别验证码...");
-      $$("#pjw-login-mask-refresh-captcha").prop("disabled", true);
-      var res = solveCAPTCHA($$("#ValidateImg")[0]);
-      if (res === false) {
-        $$("#ValidateCode").val("Please wait...");
-        RefreshValidateImg('ValidateImg');
-      } else {
-        $$("input[name=ValidateCode]").val(res["code"]);
-        if (res["certainty"] < min_certainty) {
-          $$("#pjw-captcha-result").html(res["code"] + " ...");
-          $$("#pjw-login-helper-label").html("可能的低置信度识别，正在重试");
-          min_certainty *= 0.9;
-          RefreshValidateImg('ValidateImg');
-        } else {
-          min_certainty = 14;
-          $$("#pjw-captcha-result").html(res["code"]);
-          $$("#pjw-login-mask-refresh-captcha").prop("disabled", false);
-          $$("#pjw-login-helper-label").html("");
-          $$("#pjw-login-submit-button").prop("disabled", false);
-        }
-      }
-    }
-    if ($$("#ValidateImg")[0].complete) {
-      fillCAPTCHA();
-    }
-    $$("#ValidateImg").on("load", function() {
-      fillCAPTCHA();
-    });
-    window.mdc.autoInit();
   } else if (pjw.mode == "grade_info") {
     window.pconsole = new PJWConsole();
 
@@ -1346,8 +763,6 @@ window.potatojw_intl = function() {
       $$("table:eq(0) > tbody > tr:eq(1) > td:eq(1) > div > table > tbody").prepend(`<div class="pjw-mini-button" onclick="window.location.href = '/jiaowu/student/studentinfo/achievementinfo.do?method=searchTermList&termCode=all';">加载所有学期成绩</div>`);
     }
     
-  } else if (pjw.mode == "course_info") {
-    $$("div:eq(1)").after(`<br>当前页面地址是：${window.location.href}`);
   } else if (pjw.mode == "course") {
     $(".user-dropdown").prepend(`<div style="cursor: pointer; color: #4D87F2; line-height: 17px; margin-bottom: 20px;" onclick="window.pjw.switch();window.location.reload();">${pjw.preferences.enabled ? "禁用 PotatoPlus" : "启用 PotatoPlus (Beta)"}</div>`);
     pjw.preferences.enabled && enterMode("course");
@@ -1367,10 +782,6 @@ window.proto_backup = {
     return accumulator;
   }
 };
-
-if (/(\/jiaowu\/student\/index.do|\/jiaowu\/login.do)/i.test(window.location.href)) {
-  alert = function(x) {window.alert_data = x;};
-}
 
 (function() {
   if (document.readyState == "complete")
