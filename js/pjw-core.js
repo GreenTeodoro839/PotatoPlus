@@ -257,7 +257,7 @@ window.potatojw_intl = function() {
   }
 
   // Initialize ClassList
-  const pjw_classlist_mode_list = ["dis_view", "art_view", "open_view", "all_course_list", "dis", "open", "common", "public", "read_view", "gym", "read", "grade_info", "public_view", "union", "course", "art"];
+  const pjw_classlist_mode_list = ["all_course_list", "grade_info", "course"];
   if (pjw_classlist_mode_list.includes(pjw.mode)) {
     ClassListPlugin();
   }
@@ -942,68 +942,6 @@ window.potatojw_intl = function() {
         fillCompleted();
       });
     }
-  } else if (pjw.mode == "union") {
-    var modes_map = [
-      {"name": "通识课补选", "mode": "dis", "func": "dis_public"},
-      {"name": "公选课补选", "mode": "public", "func": "dis_public"},
-      {"name": "跨院系补选", "mode": "open"},
-      // {"name": "悦读经典初选", "mode": "read_view"},
-      {"name": "悦读经典补选", "mode": "read"},
-      {"name": "通修课补选", "mode": "common"},
-      // {"name": "通识课初选", "mode": "dis_view", "func": "dis_public_view"},
-      // {"name": "公选课初选", "mode": "public_view", "func": "dis_public_view"},
-      // {"name": "跨院系初选", "mode": "open_view"},
-      {"name": "美育补选", "mode": "art", "func": "dis_public"},
-      {"name": "体育选课", "mode": "gym"},
-    ];
-    var options_html = "";
-    for (var item of modes_map) {
-      options_html += `<div data-mode="${item.mode}" data-func="${item.func || ""}" class="pjw-mini-button pjw-mode-switcher-button">${item.name}</div>`;
-    }
-    var union_panel_html = `
-      <div class="pjw-card" id="pjw-union-panel">
-        <subheading>聚合选课 Beta</subheading>
-        <div>${options_html}</div>
-      </div>
-      <div id="pjw-union-listcontainer"></div>
-    `;
-    $$("#Function").after(union_panel_html);
-    last_selected_mode = null;
-    $$(".pjw-mode-switcher-button").on("click", function() {
-      if (!window.list) {
-        $$("#Function").hide();
-        window.list = new PJWClassList($$("#pjw-union-listcontainer"));
-      } else {
-        $$(".pjw-classlist-selectors").html("");
-      }
-      if (last_selected_mode) {
-        last_selected_mode.css("color", "");
-        last_selected_mode.removeClass("keep-hover");
-      }
-      $$(this).css("color", "#0058ff");
-      $$(this).addClass("keep-hover");
-      last_selected_mode = $$(this);
-      var mode = $$(this).attr("data-mode");
-      window.pjw_select_mode = mode;
-      var func = $$(this).attr("data-func") || mode;
-      class_select_funcs[func]();
-    });
-  } else if (pjw.mode == "gym") {
-    enterMode("gym");
-  } else if (pjw.mode == "read") {
-    enterMode("read");
-  } else if (pjw.mode == "read_view") {
-    enterMode("read_view");
-  } else if (pjw.mode == "common") {
-    enterMode("common");
-  } else if (pjw.mode == "dis" || pjw.mode == "public" || pjw.mode == "art") {
-    enterMode("dis_public");
-  } else if (pjw.mode == "dis_view" || pjw.mode == "public_view" || pjw.mode == "art_view") {
-    enterMode("dis_public_view");
-  } else if (pjw.mode == "open") {
-    enterMode("open");
-  } else if (pjw.mode == "open_view") {
-    enterMode("open_view");
   } else if (pjw.mode == "grade_info") {
     window.pconsole = new PJWConsole();
 

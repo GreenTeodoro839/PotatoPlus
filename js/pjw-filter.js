@@ -261,28 +261,6 @@ var pjw_filter = {
                 list.console.error("课程时间筛选器无法加载已有课程：" + `${textStatus} (${jqXHR.status})` + " " + textStatus);
                 reject();
               });
-            } else if (pjw.site == "jw") {
-              $$.ajax({
-                url: "/jiaowu/student/teachinginfo/courseList.do",
-                data: {
-                  method: "currentTermCourse"
-                },
-                method: "GET"
-              }).done((res) => {
-                const lesson_time = [];
-                $$(res).find(".TABLE_BODY > tbody > tr:gt(0)").each((index, val) => {
-                  lesson_time.push(...list.parseClassTime($$(val).children("td:eq(4)").html()).lesson_time);
-                });
-                pjw.data.my_lesson_time = lesson_time;
-                pjw.data.my_lesson_time_update_timestamp = new Date().getTime();
-                clearCalendar();
-                setLessonTime(lesson_time);
-                saveData();
-                resolve();
-              }).fail((jqXHR, textStatus) => {
-                list.console.error("课程时间筛选器无法加载已有课程：" + `${textStatus} (${jqXHR.status})`);
-                reject();
-              });
             }
           }
         });

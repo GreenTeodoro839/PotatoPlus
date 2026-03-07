@@ -91,10 +91,7 @@ function ClassListPlugin() {
         for (const item of content) {
           if ("key" in item) {
             if (item.key == "课程编号") {
-              if (pjw.site == "jw") {
-                const link = `/jiaowu/student/elective/courseList.do?method=getCourseInfoM&courseNumber=${item.val}&classid=${classID}`;
-                item.val = `<span class="pjw-class-course-number pjw-no-expand" onclick="openLinkInFrame('${link}');">${item.val}<span class="material-icons-round" style="font-size: 12px; margin-left: 1px;">info</span></span>`;
-              } else if (pjw.site == "xk") {
+              if (pjw.site == "xk") {
                 if (typeof pjw.showCourseInfo !== "function") {
                   // Find "jxbInfoWindow" method (originally located in grablessons.js) in jQuery click event
                   const events = jQuery._data(document.querySelector(".result-container"), "events");
@@ -1745,43 +1742,23 @@ function ClassListPlugin() {
       var list_html = "";
       this.count = 0;
 
-      function preload(l) {
-        if (!(pjw_select_mode in options_data)) {
-          return;
-        }
-        if (pjw.mode != "union") {
-          parent_list.console.info("没有获取到课程选择器，正在使用预加载的选择器", "preloader");
-        }
-        // Load from pre-determined option data
-        if (opt_data == "") opt_data = JSON.parse(options_data[pjw_select_mode]);
-        else opt_data = JSON.parse(opt_data);
-        for (var item of opt_data) {
-          list_html += l.convert(item.value, item.text);
-        }
-        id = options_id[pjw_select_mode];
-      }
-
-      if (pjw.mode == "union" || !id) {
-        preload(this);
+      if (!id) {
+        // No selector element found
       } else {
         var list;
         if (typeof(id) == "string") {
-          if (!$$(`#${id}`).length) {
-            preload(this);
-          } else {
+          if ($$(`#${id}`).length) {
             list = $$(`#${id}`)[0].options;
             $$(`#${id}`).hide();
           }
         } else {
-          if (!id.length) {
-            preload(this);
-          } else {
+          if (id.length) {
             id.hide();
             list = id[0].options;
             id = id.attr("id");
           }
         }
-        if (list_html == "")
+        if (list && list_html == "")
           for (var item of list) {
             if (start-- > 0) continue;
             list_html += this.convert(item.value, item.innerHTML);
