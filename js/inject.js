@@ -96,6 +96,7 @@ if (pjw_mode != "") {
   injectScript("js/pjw-lib.js");
   injectScript("js/pjw-filter.js");
   injectScript("js/pjw-classlist.js");
+  injectScript("js/pjw-crypto.js");
   injectScript("js/pjw-modes.js");
 }
 

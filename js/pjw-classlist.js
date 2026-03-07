@@ -1222,6 +1222,12 @@ function ClassListPlugin() {
     }
 
     refresh(hard_load = false) {
+      // Abort any in-progress load (including paginated sub-requests)
+      this._loadAborted = true;
+      if (this._loadPageTimer) {
+        clearTimeout(this._loadPageTimer);
+        this._loadPageTimer = null;
+      }
       if (this.ajax_request) {
         this.ajax_request.abort();
         this.ajax_request = null;
@@ -1233,12 +1239,15 @@ function ClassListPlugin() {
       }
       this.setStatus("正在加载...");
       this.auto_inc = 0;
+      this._loading = true;
       return this.load().then(() => {
+        this._loading = false;
         this.addFilterHook("handleRefreshComplete");
         this.setStatus(true);
         this.body.css("transition", "opacity .8s cubic-bezier(0.5, 0.5, 0, 1)");
         this.body.css("opacity", "1");
       }).catch((e) => {
+        this._loading = false;
         if (e && e.statusText == "abort") return;
         this.setStatus("加载失败 : (");
         this.console.error("无法加载课程列表：" + e);
@@ -1336,9 +1345,12 @@ function ClassListPlugin() {
         this.auto_refresh_interval_id = window.setInterval(function(target) {
           // Random skip
           if (Math.random() < window.auto_refresh_loss_rate) return;
+          // Skip if previous refresh is still in progress
+          if (target._loading) return;
 
           window.setTimeout(function(target) {
             if ($$("#autorefresh-switch").hasClass("off")) return;
+            if (target._loading) return;
 
             $$("#autoreload-control-section").css("filter", "drop-shadow(2px 4px 6px rgb(255, 109, 75))");
             target.refresh(false).then(() => {

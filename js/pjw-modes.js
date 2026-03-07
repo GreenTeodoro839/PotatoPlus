@@ -207,31 +207,11 @@ function() {
     };
   }
 
-  function buildAddParam(tcId, operationType = "1", is_deselect = false) {
-    //操作类型：1添加、2删除
-    // if (!operationType) {
-      // operationType = '1';
-    // }
-  
-    // var tcId = $this.attr('data-tcid');
-  
-    // 教学班类型
-    // var tcType = '';
-    // if ($this.hasClass('sc-add')) {
-    //   tcType = $this.attr('data-teachingClassType');
-    // } else {
-    //   tcType = sessionStorage.getItem("teachingClassTypeSecond");
-    //   if (!tcType) {
-    //     tcType = sessionStorage.getItem("teachingClassType");
-    //   }
-    // }
+  function buildParamPayload(tcId, operationType, is_deselect) {
     var tcType = sessionStorage.getItem("teachingClassTypeSecond") || sessionStorage.getItem("teachingClassType");
   
-    //学生信息
     var studentInfo = JSON.parse(sessionStorage.getItem('studentInfo'));
-    // 选课批次
     var electiveBatch = studentInfo.electiveBatch;
-    // courseKind
     var courseKind = '';
     $.each(electiveBatch.limitMenuList, function(index, obj) {
       if (obj.menuCode == tcType) {
@@ -239,25 +219,53 @@ function() {
         return false;
       }
     });
+
+    // Convert courseKind to integer if possible
+    var courseKindVal = courseKind;
+    if (courseKind && !isNaN(courseKind)) courseKindVal = parseInt(courseKind);
+
     if (is_deselect) {
-      var deleteData = '{"operationType":"' + operationType + '","studentCode":"' + studentInfo.code + '","electiveBatchCode":"' + electiveBatch.code + '","teachingClassId":"' + tcId + '","isMajor":"1"}';
-    
-      var deleteStr = '{"data":' + deleteData + '}';
-      var appParam = {
-        'deleteParam': deleteStr
+      return {
+        payload: {
+          "data": {
+            "operationType": operationType,
+            "studentCode": studentInfo.code,
+            "electiveBatchCode": electiveBatch.code,
+            "teachingClassId": tcId,
+            "isMajor": "1"
+          }
+        },
+        studentCode: studentInfo.code
       };
-      return appParam;
     }
-    var addData = null;
-    addData = '{"operationType":"' + operationType + '","studentCode":"' + studentInfo.code + '","electiveBatchCode":"' + electiveBatch.code +
-      '","teachingClassId":"' + tcId + '","courseKind":"' + courseKind +
-      '","teachingClassType":"' + tcType + '"}';
-  
-    var addStr = '{"data":' + addData + '}';
-    var appParam = {
-      'addParam': addStr
+
+    return {
+      payload: {
+        "data": {
+          "operationType": operationType,
+          "studentCode": studentInfo.code,
+          "electiveBatchCode": electiveBatch.code,
+          "teachingClassId": tcId,
+          "courseKind": courseKindVal,
+          "teachingClassType": tcType
+        }
+      },
+      studentCode: studentInfo.code
     };
-    return appParam;
+  }
+
+  function buildAddParam(tcId, operationType = "1", is_deselect = false) {
+    var built = buildParamPayload(tcId, operationType, is_deselect);
+    var encrypted = pjwEncryptParam(built.payload);
+    if (is_deselect) {
+      return { 'deleteParam': encrypted, 'studentCode': built.studentCode };
+    }
+    return { 'addParam': encrypted, 'studentCode': built.studentCode };
+  }
+
+  function buildFavoriteParam(tcId, operationType = "1") {
+    var built = buildParamPayload(tcId, operationType, false);
+    return { 'addParam': JSON.stringify(built.payload) };
   }
 
   if ($("#cvPageHeadTab").length != 0
@@ -329,7 +337,7 @@ function() {
         headers: {
           "token": sessionStorage.token
         },
-        data: buildAddParam(classID, remove_fav ? "2" : "1")
+        data: buildFavoriteParam(classID, remove_fav ? "2" : "1")
       }).done((res) => {
         if (res.code == "1") {
           this.console.success(`${remove_fav ? "取消" : ""}收藏${target.getClassInfoForAlert(class_data)}成功`);
@@ -350,19 +358,23 @@ function() {
       var target = this;
       var is_deselect = class_data.select_button.status == "Deselect";
       var is_major = sessionStorage["teachingClassType"] == "ZY";
-      var tryRequestResult = (list, is_deselect, class_data) => {
+      var tryRequestResult = (list, is_deselect, class_data, tcId) => {
         return new Promise((resolve, reject) => {
           $$.ajax({
             url: "/xsxkapp/sys/xsxkapp/elective/studentstatus.do",
             type: "POST",
+            headers: {
+              "token": sessionStorage.token
+            },
             data: {
               "studentCode": JSON.parse(sessionStorage.getItem('studentInfo')).code,
+              "teachingClassId": tcId,
               "type": is_deselect ? "2" : "1"
             }
           }).done((res) => {
             if (res.code == "0") {
               window.setTimeout(() => {
-                tryRequestResult(list, is_deselect, class_data).then(
+                tryRequestResult(list, is_deselect, class_data, tcId).then(
                   () => { resolve(); }
                 ).catch(
                   (e) => { reject(); }
@@ -392,17 +404,9 @@ function() {
         if (res.code == "1") {
           if (is_deselect) {
             this.console.success(`退选${target.getClassInfoForAlert(class_data)}成功`);
-            $$.ajax({
-              url: "/xsxkapp/sys/xsxkapp/elective/studentstatus.do",
-              type: "POST",
-              data: {
-                "studentCode": JSON.parse(sessionStorage.getItem('studentInfo')).code,
-                "type": "0"
-              }
-            });
             resolve();
           } else {
-            tryRequestResult(target, is_deselect, class_data).then(
+            tryRequestResult(target, is_deselect, class_data, classID).then(
               () => { resolve(); }
             ).catch(
               (e) => { reject(); }
@@ -426,7 +430,8 @@ function() {
           if ("tcList" in item) multi_classes = true;
           else multi_classes = false;
           for (let class_i = 0; class_i < (multi_classes ? item.tcList.length : 1); class_i++) {
-            var select_status = sessionStorage["teachingClassType"] == "QB" ? false : (item.isChoose == "1" ? "Deselect" : (item.isFull == "1" ? "Full" : "Select"));
+            var choose_target = multi_classes ? item.tcList[class_i] : item;
+            var select_status = sessionStorage["teachingClassType"] == "QB" ? false : (choose_target.isChoose == "1" ? "Deselect" : (choose_target.isFull == "1" ? "Full" : "Select"));
             let parse_res;
             if (multi_classes) {
               parse_res = this.parseClassTime(item.tcList[class_i].teachingPlace);
@@ -517,6 +522,11 @@ function() {
   }
   
   list.load = function() {
+    this._loadAborted = false;
+    if (this._loadPageTimer) {
+      clearTimeout(this._loadPageTimer);
+      this._loadPageTimer = null;
+    }
     $(".content-container").css("height", "100%");
     $("body").css("overflow-y", "auto");
     var target_page = "";
@@ -548,15 +558,16 @@ function() {
           return;
         }
         if (data.totalCount > 50) {
-          if (data.totalCount > 150) {
-            this.console.info(`共需加载 ${data.totalCount} 门课程，可能需要较长时间。`);
+          let totalPages = parseInt((data.totalCount - 1) / 50);
+          if (totalPages > 2) {
+            this.console.info(`共需加载 ${data.totalCount} 门课程（${totalPages + 1} 页），可能需要较长时间。`);
           }
           let total_list = data.dataList;
-          let remaining_count = parseInt((data.totalCount - 1) / 50);
-          for (let page = 1; page <= parseInt((data.totalCount - 1) / 50); page++) {
-            let pg = page;
-            let list = this;
-            window.setTimeout(function () {
+          let list = this;
+          let loadPage = (pg) => {
+            list._loadPageTimer = window.setTimeout(() => {
+              if (list._loadAborted) return;
+              list._loadPageTimer = null;
               $.ajax({
                 type: "POST",
                 url: BaseUrl + "/sys/xsxkapp/elective/" + target_page,
@@ -570,21 +581,24 @@ function() {
                   return;
                 }
                 total_list = total_list.concat(ndata.dataList);
-                remaining_count--;
-                if (remaining_count == 0) {
+                if (pg < totalPages) {
+                  loadPage(pg + 1);
+                } else {
                   list.parse(total_list);
                   resolve();
                 }
               }).fail((jqXHR, textStatus) => {
                 list.console.warn(`获取第 ${pg} 页课程时遇到问题：${textStatus} (${jqXHR.status})`);
-                remaining_count--;
-                if (remaining_count == 0) {
+                if (pg < totalPages) {
+                  loadPage(pg + 1);
+                } else {
                   list.parse(total_list);
                   resolve();
                 }
               });
-            }, page * 500);
-          }
+            }, 500);
+          };
+          loadPage(1);
         } else {
           this.parse(data.dataList);
           resolve();
