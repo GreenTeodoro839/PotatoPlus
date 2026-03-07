@@ -505,15 +505,15 @@ window.potatojw_intl = function() {
             验证码识别服务配置
           </h2>
           <div class="mdc-dialog__content" id="pjw-captcha-config-dialog-content">
-            <p>启用验证码识别后，当前页面用于生成及校验验证码的 vtoken 将会被自动发送到远程服务器进行处理。您可以在此配置远程服务器的 URL，或留空以使用默认服务器。</p>
+            <p>启用验证码识别后，验证码图片将以 base64 格式发送到远程服务器进行点选识别。请配置识别服务的 URL，或留空以使用默认服务器。</p>
             <label id="pjw-captcha-config-dialog-url" class="mdc-text-field mdc-text-field--filled" style="width: 100%;" data-mdc-auto-init="MDCRipple">
               <span class="mdc-text-field__ripple"></span>
               <span class="mdc-floating-label" id="pjw-captcha-config-dialog-urllabel">URL</span>
-              <input class="mdc-text-field__input" type="text" aria-labelledby="pjw-captcha-config-dialog-urllabel" placeholder="https://example.com/captcha-solver/?data={%data}">
+              <input class="mdc-text-field__input" type="text" aria-labelledby="pjw-captcha-config-dialog-urllabel" placeholder="https://example.com:8000/solve">
               <span class="mdc-line-ripple"></span>
             </label>
             <section style="font-size: 12px;">
-              <span>URL 中的 {%data} 将会在使用时被替换为 vtoken 的值。</span> <br>
+              <span>服务器需实现 POST /solve 接口，接受 {"type":"xk","image":"base64"} 并返回点击坐标。</span> <br>
               <span>声明：默认服务器为实验性质，不保证准确度和稳定性。您的个人数据不会被服务器存储。</span>
             </section>
           </div>
@@ -578,49 +578,111 @@ window.potatojw_intl = function() {
       pjw.data.captcha_solver_link = captcha_config_dialog_urlfield.value;
     });
 
+    function showCaptchaToast(msg, isError) {
+      $("#pjw-captcha-toast").remove();
+      const toast = $(`<div id="pjw-captcha-toast" class="pjw-captcha-toast ${isError ? 'pjw-captcha-toast-error' : 'pjw-captcha-toast-info'}">${msg}</div>`);
+      $("body").append(toast);
+      setTimeout(() => toast.addClass("pjw-captcha-toast-visible"), 10);
+      setTimeout(() => {
+        toast.removeClass("pjw-captcha-toast-visible");
+        setTimeout(() => toast.remove(), 400);
+      }, isError ? 5000 : 3000);
+    }
+
+    function getImgBase64(imgEl) {
+      const src = imgEl.src || "";
+      if (src.startsWith("data:")) {
+        const parts = src.split(",");
+        return parts.length > 1 ? parts[1] : null;
+      }
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = imgEl.naturalWidth;
+        canvas.height = imgEl.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(imgEl, 0, 0);
+        return canvas.toDataURL("image/png").split(",")[1];
+      } catch (e) {
+        console.warn("[PotatoPlus] Failed to extract captcha image:", e);
+        return null;
+      }
+    }
+
+    function simulateClick(el, x, y) {
+      const rect = el.getBoundingClientRect();
+      const clientX = rect.left + x;
+      const clientY = rect.top + y;
+      const opts = { bubbles: true, cancelable: true, clientX, clientY, offsetX: x, offsetY: y };
+      el.dispatchEvent(new MouseEvent("mousedown", opts));
+      el.dispatchEvent(new MouseEvent("mouseup", opts));
+      el.dispatchEvent(new MouseEvent("click", opts));
+    }
+
+    let _solvingCaptcha = false;
+
+    async function solveXKCAPTCHA() {
+      if (!pjw.preferences.solve_captcha || $("#loginDiv").css("display") === "none") return;
+      const imgEl = document.getElementById("vcodeImg");
+      if (!imgEl || !imgEl.complete || imgEl.naturalWidth === 0) return;
+      if (_solvingCaptcha) return;
+      _solvingCaptcha = true;
+
+      showCaptchaToast("正在识别验证码...", false);
+
+      try {
+        const b64 = getImgBase64(imgEl);
+        if (!b64) throw new Error("无法获取验证码图片");
+
+        const apiUrl = pjw.data.captcha_solver_link || "https://njucaptcha.zcec.top/solve";
+        const resp = await fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "xk", image: b64 })
+        });
+
+        if (!resp.ok) throw new Error(`服务器返回 HTTP ${resp.status}`);
+        const result = await resp.json();
+
+        if (!result.ok) throw new Error(result.error || "识别失败");
+        const points = result.result;
+        if (!Array.isArray(points) || points.length !== 4)
+          throw new Error("返回坐标数量不正确");
+
+        const scaleX = imgEl.clientWidth / imgEl.naturalWidth;
+        const scaleY = imgEl.clientHeight / imgEl.naturalHeight;
+        for (let i = 0; i < points.length; i++) {
+          const [px, py] = points[i];
+          simulateClick(imgEl, px * scaleX, py * scaleY);
+          if (i < points.length - 1)
+            await new Promise(r => setTimeout(r, 80));
+        }
+
+        const verifyCode = points.map(([x, y]) =>
+          `${Math.round(x)}-${Math.round(y * 5 / 6)}`
+        ).join(",");
+        $("input#verifyCode").val(verifyCode);
+
+        showCaptchaToast(`识别完成 (${(result.time_ms || 0).toFixed(0)}ms)`, false);
+        console.log("[PotatoPlus] Captcha solved:", verifyCode);
+      } catch (e) {
+        console.log("[PotatoPlus] Captcha solve failed:", e.message);
+        showCaptchaToast(`验证码识别失败: ${e.message}`, true);
+      } finally {
+        _solvingCaptcha = false;
+      }
+    }
+
     function initCAPTCHASolver() {
       if (pjw.captcha_initialized === true) {
-        if (document.getElementById("vcodeImg").complete) {
-          solveXKCAPTCHA();
-        }
+        const imgEl = document.getElementById("vcodeImg");
+        if (imgEl && imgEl.complete) solveXKCAPTCHA();
         return;
       }
-      
-      $(window).on("message", (e) => {
-        if (!e.originalEvent.isTrusted) return;
-        if (e?.originalEvent?.data) {
-          let data = {};
-          try {
-            data = JSON.parse(e.originalEvent.data);
-          } catch (e) {
-            console.warn(e);
-          } finally {
-            if (data["type"] == "captcha" && data["content"].length == 4)
-              $("input#verifyCode").val(data["content"]);
-          }
-        }
-      });
 
-      $("#vcodeImg").css("cursor", "pointer");
-      $("#vcodeImg").on("click", () => {
-        $("input#verifyCode").val("");
-      })
-    
-      function solveXKCAPTCHA() {
-        if (pjw.preferences.solve_captcha && $("#loginDiv").css("display") != "none") {
-          let link = pjw.data.captcha_solver_link || "https://cubiccm.ddns.net/captcha-solver/?mode=xk&data={%data}";
-          link = link.replace("{%data}", sessionStorage.getItem("vtoken"));
-          if ($("iframe[data-type=captcha]").length) {
-            $("iframe[data-type=captcha]").attr("src", link);
-          } else {
-            $("body").append(`<iframe src="${link}" width="300" height="300" data-type="captcha" style="display: none;"></iframe>`);
-          }
-        }
-      }
-    
-      if (document.getElementById("vcodeImg").complete) {
-        solveXKCAPTCHA();
-      }
+      const imgEl = document.getElementById("vcodeImg");
+      if (!imgEl) return;
+
+      if (imgEl.complete && imgEl.naturalWidth > 0) solveXKCAPTCHA();
 
       $("#vcodeImg").on("load", () => {
         solveXKCAPTCHA();

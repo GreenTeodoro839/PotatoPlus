@@ -464,6 +464,34 @@ article#course-main {
   font-weight: bold;
 }
 
+/* Captcha toast notification */
+.pjw-captcha-toast {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-60px);
+  z-index: 100000;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.pjw-captcha-toast-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.pjw-captcha-toast-info {
+  background: rgba(33, 33, 33, 0.85);
+}
+.pjw-captcha-toast-error {
+  background: rgba(183, 28, 28, 0.9);
+}
+
 .login-div,.cv-login,.cv-user {
   height: auto !important;
 }
