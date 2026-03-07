@@ -51,7 +51,7 @@ var modes_reg = {
   course_info: /courseList.do\?method=getCourseInfoM/i, // 课程详细信息
 
   main_page: /(\/jiaowu\/student\/index.do|\/jiaowu\/login.do)/i, // 主页
-  login_page: /(\/jiaowu\/exit.do|\/jiaowu$|\/jiaowu\/$|\/jiaowu\/index.jsp)/i // 登录页
+
 }
 
 let pjw_mode = "";
@@ -98,10 +98,6 @@ if (pjw_mode != "") {
   injectScript("js/pjw-classlist.js");
   injectScript("js/pjw-crypto.js");
   injectScript("js/pjw-modes.js");
-}
-
-if (pjw_mode == "login_page") {
-  injectScript("js/pjw-captcha.js");
 }
 
 injectScript("js/pjw-core.js");
