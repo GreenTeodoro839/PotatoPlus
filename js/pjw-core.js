@@ -78,15 +78,13 @@ window.potatojw_intl = function() {
   $$("head").prepend(head_metadata);
 
   const google_analytics_js = `
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-173014211-1"></script>
+  <!-- Google tag (gtag.js) - Google Analytics 4 -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FMSTY3CRZ6"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    gtag('config', 'UA-173014211-1', {
-      'custom_map': {'dimension1': 'version'}
-    });
+    gtag('config', 'G-FMSTY3CRZ6');
     gtag('event', 'version_dimension', {'version': pjw.version + " " + pjw.platform});
     </script>
   `;
