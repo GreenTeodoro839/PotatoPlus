@@ -78,13 +78,15 @@ window.potatojw_intl = function() {
   $$("head").prepend(head_metadata);
 
   const google_analytics_js = `
-  <!-- Google tag (gtag.js) - Google Analytics 4 -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FMSTY3CRZ6"></script>
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-173014211-1"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    gtag('config', 'G-FMSTY3CRZ6');
+    gtag('config', 'UA-173014211-1', {
+      'custom_map': {'dimension1': 'version'}
+    });
     gtag('event', 'version_dimension', {'version': pjw.version + " " + pjw.platform});
     </script>
   `;
@@ -171,6 +173,14 @@ window.potatojw_intl = function() {
       <span class="pjw-mini-button" onclick="toggleAutoEval();" id="toggle_auto_eval_button">开启自动评价</span>
       <span>开启后，点一下对应课程即自动五星好评。</span>
     `,
+    login_page: `
+      <input type="checkbox" id="store_login_info" class="login_settings" checked="checked">
+      <label for="store_login_info">记住登录信息</label>
+      <input type="checkbox" id="solve_captcha" class="login_settings" checked="checked">
+      <label for="solve_captcha">验证码识别</label>
+      <input type="checkbox" id="share_stats" class="login_settings" checked="checked">
+      <label for="share_stats">发送匿名统计数据</label>
+    `,
   };
 
   // PJW Toolbar for specific pages
@@ -255,7 +265,7 @@ window.potatojw_intl = function() {
   }
 
   // Initialize ClassList
-  const pjw_classlist_mode_list = ["all_course_list", "grade_info", "course"];
+  const pjw_classlist_mode_list = ["dis_view", "art_view", "open_view", "all_course_list", "dis", "open", "common", "public", "read_view", "gym", "read", "grade_info", "public_view", "union", "course", "art"];
   if (pjw_classlist_mode_list.includes(pjw.mode)) {
     ClassListPlugin();
   }
@@ -657,6 +667,9 @@ window.potatojw_intl = function() {
       } catch (e) {
         console.log("[PotatoPlus] Captcha solve failed:", e.message);
         showCaptchaToast(`验证码识别失败: ${e.message}`, true);
+        if (e.message === "Failed to segment/match characters") {
+          setTimeout(() => { $(".verify-refresh").trigger("click"); }, 100);
+        }
       } finally {
         _solvingCaptcha = false;
       }
@@ -940,6 +953,246 @@ window.potatojw_intl = function() {
         fillCompleted();
       });
     }
+  } else if (pjw.mode == "union") {
+    var modes_map = [
+      {"name": "通识课补选", "mode": "dis", "func": "dis_public"},
+      {"name": "公选课补选", "mode": "public", "func": "dis_public"},
+      {"name": "跨院系补选", "mode": "open"},
+      // {"name": "悦读经典初选", "mode": "read_view"},
+      {"name": "悦读经典补选", "mode": "read"},
+      {"name": "通修课补选", "mode": "common"},
+      // {"name": "通识课初选", "mode": "dis_view", "func": "dis_public_view"},
+      // {"name": "公选课初选", "mode": "public_view", "func": "dis_public_view"},
+      // {"name": "跨院系初选", "mode": "open_view"},
+      {"name": "美育补选", "mode": "art", "func": "dis_public"},
+      {"name": "体育选课", "mode": "gym"},
+    ];
+    var options_html = "";
+    for (var item of modes_map) {
+      options_html += `<div data-mode="${item.mode}" data-func="${item.func || ""}" class="pjw-mini-button pjw-mode-switcher-button">${item.name}</div>`;
+    }
+    var union_panel_html = `
+      <div class="pjw-card" id="pjw-union-panel">
+        <subheading>聚合选课 Beta</subheading>
+        <div>${options_html}</div>
+      </div>
+      <div id="pjw-union-listcontainer"></div>
+    `;
+    $$("#Function").after(union_panel_html);
+    last_selected_mode = null;
+    $$(".pjw-mode-switcher-button").on("click", function() {
+      if (!window.list) {
+        $$("#Function").hide();
+        window.list = new PJWClassList($$("#pjw-union-listcontainer"));
+      } else {
+        $$(".pjw-classlist-selectors").html("");
+      }
+      if (last_selected_mode) {
+        last_selected_mode.css("color", "");
+        last_selected_mode.removeClass("keep-hover");
+      }
+      $$(this).css("color", "#0058ff");
+      $$(this).addClass("keep-hover");
+      last_selected_mode = $$(this);
+      var mode = $$(this).attr("data-mode");
+      window.pjw_select_mode = mode;
+      var func = $$(this).attr("data-func") || mode;
+      class_select_funcs[func]();
+    });
+  } else if (pjw.mode == "gym") {
+    enterMode("gym");
+  } else if (pjw.mode == "read") {
+    enterMode("read");
+  } else if (pjw.mode == "read_view") {
+    enterMode("read_view");
+  } else if (pjw.mode == "common") {
+    enterMode("common");
+  } else if (pjw.mode == "dis" || pjw.mode == "public" || pjw.mode == "art") {
+    enterMode("dis_public");
+  } else if (pjw.mode == "dis_view" || pjw.mode == "public_view" || pjw.mode == "art_view") {
+    enterMode("dis_public_view");
+  } else if (pjw.mode == "open") {
+    enterMode("open");
+  } else if (pjw.mode == "open_view") {
+    enterMode("open_view");
+  } else if (pjw.mode == "login_page") {
+    $$("body").prepend(`
+      <div id="pjw-login-mask" style="position: fixed; top: 0; left: 0; height: 100%; width: 100%; background-color: rgba(0, 0, 0, .2); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+      <div style="display: flex; flex-direction: column; align-items: center; border-radius: 30px; background-color: white; padding: 30px 20px;">
+        <form action="login.do" method="POST" style="display: flex; flex-direction: column; align-items: flex-start;" id="pjw-login-form">
+        <h1 style="margin-left: 10px;">欢迎回来</h1>
+
+        <div class="mdc-text-field mdc-text-field--filled pjw-login-field" data-mdc-auto-init="MDCTextField">
+          <span class="mdc-text-field__ripple"></span>
+          <span class="mdc-floating-label" id="pjw-login-username-label">用户名</span>
+          <input class="mdc-text-field__input" name="userName" type="text" aria-labelledby="pjw-login-username-label" placeholder=" " required="required">
+          <span class="mdc-line-ripple"></span>
+        </div>
+
+        <div class="mdc-text-field mdc-text-field--filled pjw-login-field" data-mdc-auto-init="MDCTextField">
+          <span class="mdc-text-field__ripple"></span>
+          <span class="mdc-floating-label" id="pjw-login-password-label">密码</span>
+          <input class="mdc-text-field__input" name="password" type="password" aria-labelledby="pjw-login-password-label" placeholder=" " required="required">
+          <span class="mdc-line-ripple"></span>
+        </div>
+
+        <div style="margin: 30px 0;">
+          <button data-mdc-auto-init="MDCRipple" class="mdc-button mdc-button--raised pjw-login-button" id="pjw-login-submit-button" onclick="submitLoginForm();" type="button" disabled="disabled">
+            <div class="mdc-button__ripple"></div>
+            <span class="material-icons-round">login</span>
+            <div class="mdc-button__label" style="margin-left: 8px;">登录</div>
+          </button>
+
+          <button data-mdc-auto-init="MDCRipple" class="mdc-button mdc-button--raised pjw-login-button" style="background-color: #63065f;" type="button" onclick="casLogin();">
+            <div class="mdc-button__ripple"></div>
+            <span class="material-icons-round">open_in_new</span>
+            <div class="mdc-button__label" style="margin-left: 16px;">统一认证</div>
+          </button>
+        </div>
+
+        <input type="hidden" name="returnUrl" value="/jiaowu/student/index.do">
+        <input type="hidden" name="ValidateCode">
+
+        </form>
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-direction: row; margin-bottom: 10px;">
+          <canvas id="pjw-login-mask-canvas" width="80", height="20">Canvas is not supported in your browser.</canvas>
+          <button data-mdc-auto-init="MDCRipple" id="pjw-login-mask-refresh-captcha" class="mdc-button" style="color: rgba(0, 0, 0, .5); margin-left: 20px;" onclick="RefreshValidateImg('ValidateImg');" disabled="disabled">
+            <div class="mdc-button__ripple"></div>
+            <div class="mdc-button__label" id="pjw-captcha-result">刷新验证码</div>
+          </button>
+        </div>
+        <button data-mdc-auto-init="MDCRipple" class="mdc-button" style="color: rgba(0, 0, 0, .5);" onclick="closeLoginMask();">
+          <div class="mdc-button__ripple"></div>
+          <div class="mdc-button__label">关闭</div>
+        </button>
+      </div>
+      </div>
+    `);
+    $$("body").on("keypress", (e) => {
+      if (!window.login_mask_closed)
+        if (e.which == 13 || e.keyCode == 13)
+          submitLoginForm();
+    });
+    $$("#pjw-login-mask").append($$("#pjw-toolbar"));
+
+    window.submitLoginForm = function() {
+      var username = $$("#pjw-login-form").find("input[name=userName]").val();
+      var password = $$("#pjw-login-form").find("input[name=password]").val();
+      if (!username && !password) {
+        casLogin();
+        return;
+      }
+      if (!username || !password) return;
+      if (login_settings["store_login_info"]) {
+        var login_info = {
+          username: username,
+          password: password
+        }
+        pjw.data.login_info = login_info;
+      }
+      $$("#pjw-login-form").submit();
+    }
+
+    window.closeLoginMask = function() {
+      $$("body").append($$("#pjw-toolbar"));
+      $$("#pjw-login-mask").remove();
+      window.login_mask_closed = true;
+    }
+
+    // Load login settings
+    window.login_settings = {};
+    function updateLoginSettings(write = false) {
+      login_settings = pjw.preferences.login_settings || {};
+      $$(".login_settings").each(function() {
+        const t = $$(this);
+        if (t.attr("id") in login_settings) {
+          if (write)
+            login_settings[t.attr("id")] = t.prop("checked");
+          else
+            t.prop("checked", login_settings[t.attr("id")]);
+        } else {
+          login_settings[t.attr("id")] = t.prop("checked");
+        }
+      });
+      pjw.preferences.login_settings = login_settings;
+      if (login_settings["solve_captcha"] == false)
+        closeLoginMask();
+      if (!write) return login_settings;
+
+      if (login_settings["store_login_info"] == false)
+        delete pjw.data.login_info
+      if (login_settings["solve_captcha"] == true && $$("#ValidateCode").val().length == 0)
+        fillCAPTCHA();
+      return login_settings;
+    }
+
+    login_settings = updateLoginSettings();
+    $$(".login_settings").on("change", function() { updateLoginSettings(true); });
+
+    // Username & password auto-fill
+    if (login_settings["store_login_info"] == true && pjw.data.login_info !== null) {
+      if ($$("input[name=userName]").val().length == 0)
+        $$("input[name=userName]").val(pjw.data.login_info.username);
+      if ($$("input[name=password]").val().length == 0)
+        $$("input[name=password]").val(pjw.data.login_info.password);
+    }
+    const checkLogin = function() {
+      login_settings = pjw.preferences.login_settings;
+      if (CheckForm()) {
+        if (login_settings["store_login_info"] == true) {
+          const login_info = {
+            username: $$("input[name=userName]").val(),
+            password: $$("input[name=password]").val()
+          }
+          pjw.data.login_info = login_info;
+        }
+        return true;
+      } else {
+        return false;
+      }
+    }
+    $$("#Wrapper").find("form[action=\"login.do\"]").attr("onsubmit", "");
+    $$("#Wrapper").find("form[action=\"login.do\"]").on("submit", checkLogin);
+
+    $$("input[name=returnUrl]").val("/jiaowu/student/index.do");
+    $$("input[type=submit]").after("<br><span id=\"pjw-login-helper-label\"></span>");
+
+    // CAPTCHA auto-fill
+    CAPTCHAPlugin();
+
+    let min_certainty = 14;
+
+    function fillCAPTCHA() {
+      if (!pjw.data.login_settings?.["solve_captcha"]) return;
+      $$("#pjw-captcha-result").html("正在识别验证码...");
+      $$("#pjw-login-mask-refresh-captcha").prop("disabled", true);
+      var res = solveCAPTCHA($$("#ValidateImg")[0]);
+      if (res === false) {
+        $$("#ValidateCode").val("Please wait...");
+        RefreshValidateImg('ValidateImg');
+      } else {
+        $$("input[name=ValidateCode]").val(res["code"]);
+        if (res["certainty"] < min_certainty) {
+          $$("#pjw-captcha-result").html(res["code"] + " ...");
+          $$("#pjw-login-helper-label").html("可能的低置信度识别，正在重试");
+          min_certainty *= 0.9;
+          RefreshValidateImg('ValidateImg');
+        } else {
+          min_certainty = 14;
+          $$("#pjw-captcha-result").html(res["code"]);
+          $$("#pjw-login-mask-refresh-captcha").prop("disabled", false);
+          $$("#pjw-login-helper-label").html("");
+          $$("#pjw-login-submit-button").prop("disabled", false);
+        }
+      }
+    }
+    if ($$("#ValidateImg")[0].complete) {
+      fillCAPTCHA();
+    }
+    $$("#ValidateImg").on("load", function() {
+      fillCAPTCHA();
+    });
+    window.mdc.autoInit();
   } else if (pjw.mode == "grade_info") {
     window.pconsole = new PJWConsole();
 
