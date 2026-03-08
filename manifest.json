@@ -17,6 +17,12 @@
       "js": ["js/inject.js"],
       "run_at": "document_start",
       "all_frames": true
+    },
+    {
+      "matches": ["*://authserver.nju.edu.cn/*"],
+      "js": ["js/inject.js"],
+      "run_at": "document_start",
+      "all_frames": true
     }
   ],
   "web_accessible_resources": [{
@@ -28,7 +34,8 @@
   ],
   "host_permissions": [
     "*://*.nju.edu.cn/jiaowu*",
-    "*://xk.nju.edu.cn/*"
+    "*://xk.nju.edu.cn/*",
+    "*://authserver.nju.edu.cn/*"
   ],
   "browser_specific_settings": {
     "gecko": {

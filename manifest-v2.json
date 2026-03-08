@@ -17,6 +17,12 @@
       "js": ["js/inject.js"],
       "run_at": "document_start",
       "all_frames": true
+    },
+    {
+      "matches": ["*://authserver.nju.edu.cn/*"],
+      "js": ["js/inject.js"],
+      "run_at": "document_start",
+      "all_frames": true
     }
   ],
   "web_accessible_resources": ["js/*","css/*","fonts/*"],

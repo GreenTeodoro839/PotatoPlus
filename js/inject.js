@@ -29,6 +29,8 @@ var modes_reg = {
   welcome: /(xk.nju.edu.cn\/xsxkapp\/sys\/xsxkapp\/\*default\/index.do|\/\/xk.nju.edu.cn\/$)/i, // xk.nju.edu.cn 登录界面
   xk_system: /\/\/xk.nju.edu.cn/i, // 选课系统 xk.nju.edu.cn 的其它界面
 
+  authserver: /\/\/authserver\.nju\.edu\.cn\/authserver\/login/i, // 统一身份认证登录
+
   course_eval: /evalcourse\/courseEval.do\?method=currentEvalCourse/i, // 课程评估
   grade_info: /student\/studentinfo\/achievementinfo.do\?method=searchTermList/i, // 成绩查看
 }
@@ -63,20 +65,25 @@ if (pjw_mode == "grade_info") {
   injectStyleFromString(`table.TABLE_BODY{ display: none; }`);
 }
 
-if (pjw_mode != "course" && pjw_mode != "xk_system" && pjw_mode != "welcome") {
-  injectScript("js/jquery.min.js");
+if (pjw_mode == "authserver") {
+  // Authserver mode: lightweight injection (core only, page has jQuery)
+  injectScript("js/pjw-core.js");
+} else {
+  if (pjw_mode != "course" && pjw_mode != "xk_system" && pjw_mode != "welcome") {
+    injectScript("js/jquery.min.js");
+  }
+
+  injectScript("js/material-components-web.min.js");
+
+  if (pjw_mode != "") {
+    injectScript("js/tinypinyin.js");
+    injectScript("js/pjw-console.js");
+    injectScript("js/pjw-lib.js");
+    injectScript("js/pjw-filter.js");
+    injectScript("js/pjw-classlist.js");
+    injectScript("js/pjw-crypto.js");
+    injectScript("js/pjw-modes.js");
+  }
+
+  injectScript("js/pjw-core.js");
 }
-
-injectScript("js/material-components-web.min.js");
-
-if (pjw_mode != "") {
-  injectScript("js/tinypinyin.js");
-  injectScript("js/pjw-console.js");
-  injectScript("js/pjw-lib.js");
-  injectScript("js/pjw-filter.js");
-  injectScript("js/pjw-classlist.js");
-  injectScript("js/pjw-crypto.js");
-  injectScript("js/pjw-modes.js");
-}
-
-injectScript("js/pjw-core.js");
