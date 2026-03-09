@@ -23,11 +23,17 @@
       "js": ["js/inject.js"],
       "run_at": "document_start",
       "all_frames": true
+    },
+    {
+      "matches": ["*://ehallapp.nju.edu.cn/jwapp/sys/wspjyyapp/*"],
+      "js": ["js/inject.js"],
+      "run_at": "document_start",
+      "all_frames": true
     }
   ],
   "web_accessible_resources": [{
     "resources": ["js/*","css/*","fonts/*"],
-    "matches": ["*://*.nju.edu.cn/*"]
+    "matches": ["*://*.nju.edu.cn/*", "*://ehallapp.nju.edu.cn/*"]
   }],
   "permissions": [
     "nativeMessaging"
@@ -35,7 +41,8 @@
   "host_permissions": [
     "*://*.nju.edu.cn/jiaowu*",
     "*://xk.nju.edu.cn/*",
-    "*://authserver.nju.edu.cn/*"
+    "*://authserver.nju.edu.cn/*",
+    "*://ehallapp.nju.edu.cn/*"
   ],
   "browser_specific_settings": {
     "gecko": {

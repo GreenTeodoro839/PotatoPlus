@@ -81,10 +81,6 @@ window.potatojw_intl = function() {
   console.log(pjw.mode + " mode activated");
 
   const custom_toolbar_html = {
-    course_eval: `
-      <span class="pjw-mini-button" onclick="toggleAutoEval();" id="toggle_auto_eval_button">开启自动评价</span>
-      <span>开启后，点一下对应课程即自动五星好评。</span>
-    `,
   };
 
   // PJW Toolbar for specific pages
@@ -222,11 +218,6 @@ window.potatojw_intl = function() {
     // xk/welcome.js handles this
     if (typeof initXKWelcome === "function") {
       initXKWelcome(getBulletin);
-    }
-  } else if (pjw.mode == "course_eval") {
-    // jiaowu/eval.js handles this
-    if (typeof initCourseEval === "function") {
-      initCourseEval();
     }
   } else if (pjw.mode == "grade_info") {
     // jiaowu/grade.js handles this
