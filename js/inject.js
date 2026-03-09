@@ -24,16 +24,15 @@ function injectStyleFromString(str) {
   document.documentElement.appendChild(style);
 }
 
+// Mode detection
 var modes_reg = {
-  course: /grablessons.do/i, // 选课系统列表
-  welcome: /(xk.nju.edu.cn\/xsxkapp\/sys\/xsxkapp\/\*default\/index.do|\/\/xk.nju.edu.cn\/$)/i, // xk.nju.edu.cn 登录界面
-  xk_system: /\/\/xk.nju.edu.cn/i, // 选课系统 xk.nju.edu.cn 的其它界面
-
-  authserver: /\/\/authserver\.nju\.edu\.cn\/authserver\/login/i, // 统一身份认证登录
-
-  course_eval: /evalcourse\/courseEval.do\?method=currentEvalCourse/i, // 课程评估
-  grade_info: /student\/studentinfo\/achievementinfo.do\?method=searchTermList/i, // 成绩查看
-}
+  course: /grablessons.do/i,
+  welcome: /(xk.nju.edu.cn\/xsxkapp\/sys\/xsxkapp\/\*default\/index.do|\/\/xk.nju.edu.cn\/$)/i,
+  xk_system: /\/\/xk.nju.edu.cn/i,
+  authserver: /\/\/authserver\.nju\.edu\.cn\/authserver\/login/i,
+  course_eval: /evalcourse\/courseEval.do\?method=currentEvalCourse/i,
+  grade_info: /student\/studentinfo\/achievementinfo.do\?method=searchTermList/i,
+};
 
 let pjw_mode = "";
 for (const mode_name in modes_reg) {
@@ -43,47 +42,74 @@ for (const mode_name in modes_reg) {
   }
 }
 
+// Expose mode via meta tag
 (() => {
   const info = document.createElement("meta");
   info.setAttribute("name", "pjw");
-  info.setAttribute("version", 
-      (typeof GM_info == "undefined" ? "" : GM_info?.script?.version) 
-      || (browser?.runtime?.getManifest()?.version || ""));
+  info.setAttribute("version", browser?.runtime?.getManifest()?.version || "");
   info.setAttribute("mode", pjw_mode);
   document.documentElement.appendChild(info);
 })();
 
-/* BELOW COMMENTS ARE USED TO GENERATE USERSCRIPT */
-// injectStyle("css/material-components-web.min.css");
-// injectStyle("css/pjw.css");
-// injectStyle("css/pjw-classlist.css");
-// injectStyle("css/pjw-filter.css");
-// injectStyle("css/pjw-console.css");
-/* DO NOT REMOVE */
-
-if (pjw_mode == "grade_info") {
-  injectStyleFromString(`table.TABLE_BODY{ display: none; }`);
-}
-
+// Conditional script/style injection based on current page
 if (pjw_mode == "authserver") {
-  // Authserver mode: lightweight injection (core only, page has jQuery)
-  injectScript("js/pjw-core.js");
-} else {
-  if (pjw_mode != "course" && pjw_mode != "xk_system" && pjw_mode != "welcome") {
-    injectScript("js/jquery.min.js");
+  // Authserver: lightweight, no jQuery/MDC needed (page has its own jQuery)
+  injectScript("js/common/core.js");
+  injectScript("js/authserver/captcha.js");
+
+} else if (pjw_mode == "welcome") {
+  // xk.nju.edu.cn welcome/login page (page already has jQuery)
+  injectScript("js/vendor/material-components-web.min.js");
+  injectScript("js/common/core.js");
+  injectScript("js/xk/welcome.js");
+  injectScript("js/jiaowu/init.js");
+
+} else if (pjw_mode == "course") {
+  // xk.nju.edu.cn course selection (page already has jQuery)
+  injectScript("js/vendor/material-components-web.min.js");
+  injectScript("js/vendor/tinypinyin.js");
+  injectScript("js/common/core.js");
+  injectScript("js/common/console.js");
+  injectScript("js/common/lib.js");
+  injectScript("js/common/filter.js");
+  injectScript("js/common/classlist.js");
+  injectScript("js/common/crypto.js");
+  injectScript("js/xk/course.js");
+  injectScript("js/jiaowu/init.js");
+
+} else if (pjw_mode == "xk_system") {
+  // Other xk.nju.edu.cn pages (no specific features, just core)
+  injectScript("js/common/core.js");
+
+} else if (pjw_mode == "grade_info") {
+  // jiaowu grade info page
+  if (pjw_mode == "grade_info") {
+    injectStyleFromString(`table.TABLE_BODY{ display: none; }`);
   }
+  injectScript("js/vendor/jquery.min.js");
+  injectScript("js/vendor/material-components-web.min.js");
+  injectScript("js/vendor/tinypinyin.js");
+  injectScript("js/common/core.js");
+  injectScript("js/common/console.js");
+  injectScript("js/common/lib.js");
+  injectScript("js/common/filter.js");
+  injectScript("js/common/classlist.js");
+  injectScript("js/common/crypto.js");
+  injectScript("js/jiaowu/grade.js");
+  injectScript("js/jiaowu/init.js");
 
-  injectScript("js/material-components-web.min.js");
+} else if (pjw_mode == "course_eval") {
+  // jiaowu course evaluation page
+  injectScript("js/vendor/jquery.min.js");
+  injectScript("js/vendor/material-components-web.min.js");
+  injectScript("js/common/core.js");
+  injectScript("js/jiaowu/eval.js");
+  injectScript("js/jiaowu/init.js");
 
-  if (pjw_mode != "") {
-    injectScript("js/tinypinyin.js");
-    injectScript("js/pjw-console.js");
-    injectScript("js/pjw-lib.js");
-    injectScript("js/pjw-filter.js");
-    injectScript("js/pjw-classlist.js");
-    injectScript("js/pjw-crypto.js");
-    injectScript("js/pjw-modes.js");
-  }
-
-  injectScript("js/pjw-core.js");
+} else if (pjw_mode != "") {
+  // Other recognized jiaowu pages
+  injectScript("js/vendor/jquery.min.js");
+  injectScript("js/vendor/material-components-web.min.js");
+  injectScript("js/common/core.js");
+  injectScript("js/jiaowu/init.js");
 }

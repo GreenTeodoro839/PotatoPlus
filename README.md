@@ -1,49 +1,62 @@
-# PotatoPlus
+# PotatoPlus 🥔
 
-南京大学教务系统改善工程！
+NJU 土豆改善工程 — 南京大学教务系统浏览器扩展
 
-[项目页面及更新日志](https://cubiccm.ddns.net/2019/09/potatojw-upgraded/)
+## 功能
 
-<a href='https://chrome.google.com/webstore/detail/potatoplus/mokphlegfcilcbnjmhgfikjgnbnconba'><img src='https://storage.googleapis.com/web-dev-uploads/image/WlD8wC6g8khYWPJUsQceQkhXSlv1/HRs9MPufa1J1h5glNhut.png' alt='Chrome Web Store Badge' style='width: 238px; height: 72px;'/></a>
-<a href='https://microsoftedge.microsoft.com/addons/detail/potatoplus/miofoebmeohjbieochdmaolpaneapmib'><img src='https://get.microsoft.com/images/en-us%20light.svg' alt='Microsoft Store' style='width: 202.5px; height: 72px;'/></a>
+- **统一身份认证验证码自动识别** — authserver.nju.edu.cn 登录页验证码自动填写
+- **选课平台美化** — xk.nju.edu.cn 课程列表增强、筛选、收藏
+- **选课平台验证码识别** — xk.nju.edu.cn 登录验证码自动点选
+- **GPA 计算器** — 成绩页面内置学分绩计算
+- **自动评教** — 一键五星好评
 
 ## 安装
 
-*可以在 [项目主页](https://cubiccm.ddns.net/2019/09/potatojw-upgraded/) 获取较详细的安装教程。*
+### Chrome / Edge
+1. 打开 `chrome://extensions/`（或 `edge://extensions/`）
+2. 开启「开发者模式」
+3. 点击「加载已解压的扩展程序」，选择本项目文件夹
 
-### 通过浏览器插件安装
+### Firefox
+1. 打开 `about:debugging#/runtime/this-firefox`
+2. 点击「临时载入附加组件」
+3. 选择 `manifest.json`
 
-**Chrome:** [Chrome 网上应用店](https://chrome.google.com/webstore/detail/potatoplus/mokphlegfcilcbnjmhgfikjgnbnconba)
+## 项目结构
 
-**Edge:** [Microsoft Store](https://microsoftedge.microsoft.com/addons/detail/potatoplus/miofoebmeohjbieochdmaolpaneapmib)
-
-**Firefox:** [GitHub Releases](https://github.com/cubiccm/potatoplus/releases/latest/download/PotatoPlus.xpi)
-
-**Safari:** 可通过 Xcode 对插件进行转换和签名后在 Safari 中使用，请参考 [官方文档](https://developer.apple.com/documentation/safariservices/safari_web_extensions/converting_a_web_extension_for_safari)。
-
-### 通过 Userscript 安装
-
-请确保浏览器中已经安装 [Tampermonkey](https://tampermonkey.net) 等支持 Userscript 的插件。
-
-[获取 Userscript（GitHub Releases）](https://github.com/cubiccm/potatoplus/releases/latest/download/potatoplus.user.js)
-
-[获取 Userscript（NJU GitLab）](https://git.nju.edu.cn/Limos/cdn/-/raw/master/potatoplus.user.js)
-
-## 生成
-
-包装为浏览器插件：
-```shell
-python3 package.py [OUTPUT_PATH] 
+```
+js/
+├── inject.js          # 入口，按页面按需加载脚本
+├── vendor/            # 第三方库
+│   ├── jquery.min.js
+│   ├── material-components-web.min.js
+│   └── tinypinyin.js
+├── common/            # 共享模块
+│   ├── core.js        # pjw 全局对象、偏好存储
+│   ├── console.js     # 通知控制台
+│   ├── lib.js         # UI 组件库
+│   ├── crypto.js      # AES 加密（选课 API）
+│   ├── filter.js      # 课程筛选
+│   └── classlist.js   # 课程列表组件
+├── authserver/        # 统一身份认证
+│   └── captcha.js     # 验证码识别
+├── xk/                # 选课系统 xk.nju.edu.cn
+│   ├── welcome.js     # 登录页 + 验证码识别
+│   └── course.js      # 选课列表增强
+└── jiaowu/            # 教务系统
+    ├── init.js        # 教务页面通用初始化
+    ├── grade.js       # GPA 计算器
+    └── eval.js        # 自动评教
 ```
 
-生成 Userscript：
+## 开发
 
-```shell
-python3 generate-userscript.py [VERSION] [OUTPUT_FILENAME] [UPDATE_URL]
-```
+基于 Chrome Manifest V3，纯浏览器扩展（不支持油猴脚本）。
 
-## 🌟
+## License
 
-[![Stargazers over time](https://starchart.cc/cubiccm/PotatoPlus.svg)](https://starchart.cc/cubiccm/PotatoPlus)
+GPL-3.0 — 详见 [LICENSE](LICENSE)
 
+## Credits
 
+By [Limos](https://cubiccm.ddns.net/about)
