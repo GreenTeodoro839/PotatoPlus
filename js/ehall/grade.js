@@ -319,7 +319,8 @@
       if (selectedIds.has(i)) {
         var xf = parseFloat(c.XF) || 0;
         var zcj = parseFloat(c.ZCJ);
-        if (xf > 0 && !isNaN(zcj)) {
+        // 只有百分制(DJCJLXDM=100)才计入学分绩，通过/不通过(200)等不计入
+        if (xf > 0 && !isNaN(zcj) && String(c.DJCJLXDM) === "100") {
           totalC += xf;
           totalW += (zcj / 20) * xf;
         }
@@ -557,14 +558,14 @@
       var rows = (json && json.datas && json.datas.xscjcx && json.datas.xscjcx.rows) || [];
       allCourses = rows;
 
-      // Default selection: courses with credits > 0 and ZCJ != null
+      // Default selection: courses with credits > 0, ZCJ != null, and 百分制
       var prefs = loadPrefs();
       if (prefs.selectedIds) {
         selectedIds = new Set(prefs.selectedIds);
       } else {
         selectedIds = new Set();
         rows.forEach(function(c, i) {
-          if ((parseFloat(c.XF) || 0) > 0 && c.ZCJ != null && c.ZCJ !== "") {
+          if ((parseFloat(c.XF) || 0) > 0 && c.ZCJ != null && c.ZCJ !== "" && String(c.DJCJLXDM) === "100") {
             selectedIds.add(i);
           }
         });
