@@ -206,8 +206,7 @@
       filter: blur(4px);
       transition: filter 0.2s;
     }
-    .pp-course-card:hover .pp-course-score.pp-hidden,
-    .pp-course-card.pp-selected .pp-course-score.pp-hidden {
+    .pp-course-card:hover .pp-course-score.pp-hidden {
       filter: none;
     }
     .pp-course-checkbox {
