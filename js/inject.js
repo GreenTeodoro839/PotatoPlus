@@ -39,7 +39,7 @@ var modes_reg = {
   xk_system: /\/\/xk.nju.edu.cn/i,
   authserver: /\/\/authserver\.nju\.edu\.cn\/authserver\/login/i,
   ehall_eval: /ehallapp\.nju\.edu\.cn\/jwapp\/sys\/wspjyyapp/i,
-  grade_info: /student\/studentinfo\/achievementinfo.do\?method=searchTermList/i,
+  ehall_grade: /ehallapp\.nju\.edu\.cn\/jwapp\/sys\/cjcx/i,
 };
 
 let pjw_mode = "";
@@ -101,20 +101,11 @@ if (pjw_mode == "ehall_eval") {
     "js/common/core.js",
   ]);
 
-} else if (pjw_mode == "grade_info") {
-  injectStyleFromString(`table.TABLE_BODY{ display: none; }`);
+} else if (pjw_mode == "ehall_grade") {
+  // ehall 成绩查询页面
   injectScripts([
-    "js/vendor/jquery.min.js",
-    "js/vendor/material-components-web.min.js",
-    "js/vendor/tinypinyin.js",
     "js/common/core.js",
-    "js/common/console.js",
-    "js/common/lib.js",
-    "js/common/filter.js",
-    "js/common/classlist.js",
-    "js/common/crypto.js",
-    "js/jiaowu/grade.js",
-    "js/jiaowu/init.js",
+    "js/ehall/grade.js",
   ]);
 
 } else if (pjw_mode != "") {

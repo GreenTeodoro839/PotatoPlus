@@ -29,6 +29,12 @@
       "js": ["js/inject.js"],
       "run_at": "document_start",
       "all_frames": true
+    },
+    {
+      "matches": ["*://ehallapp.nju.edu.cn/jwapp/sys/cjcx/*"],
+      "js": ["js/inject.js"],
+      "run_at": "document_start",
+      "all_frames": true
     }
   ],
   "web_accessible_resources": [{

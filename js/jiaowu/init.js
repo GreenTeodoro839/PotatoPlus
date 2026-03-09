@@ -165,7 +165,7 @@ window.potatojw_intl = function() {
   }
 
   // Initialize ClassList
-  const pjw_classlist_mode_list = ["grade_info", "course"];
+  const pjw_classlist_mode_list = ["course"];
   if (pjw_classlist_mode_list.includes(pjw.mode)) {
     ClassListPlugin();
   }
@@ -218,11 +218,6 @@ window.potatojw_intl = function() {
     // xk/welcome.js handles this
     if (typeof initXKWelcome === "function") {
       initXKWelcome(getBulletin);
-    }
-  } else if (pjw.mode == "grade_info") {
-    // jiaowu/grade.js handles this
-    if (typeof initGradeInfo === "function") {
-      initGradeInfo();
     }
   } else if (pjw.mode == "course") {
     // xk/course.js handles this
