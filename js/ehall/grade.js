@@ -243,7 +243,9 @@
   `;
 
   function injectCSS() {
+    if (document.getElementById("pp-grade-style")) return;
     var style = document.createElement("style");
+    style.id = "pp-grade-style";
     style.textContent = CSS;
     document.head.appendChild(style);
   }
@@ -260,6 +262,7 @@
         setTimeout(tryInject, 500);
         return;
       }
+      injectCSS();
       btnEl = document.createElement("div");
       btnEl.id = "pp-grade-btn";
       btnEl.textContent = "📊 PotatoPlus 成绩查询";
@@ -459,8 +462,6 @@
 
   function openPanel() {
     if (overlayEl) return;
-
-    injectCSS();
 
     overlayEl = document.createElement("div");
     overlayEl.id = "pp-grade-overlay";
