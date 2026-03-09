@@ -316,18 +316,20 @@
     allCourses.forEach(function(c, i) {
       if (selectedIds.has(i)) {
         var xf = parseFloat(c.XF) || 0;
-        var jd = parseFloat(c.XFJD) || 0;
-        totalC += xf;
-        totalW += jd * xf;
+        var zcj = parseFloat(c.ZCJ);
+        if (xf > 0 && !isNaN(zcj)) {
+          totalC += xf;
+          totalW += (zcj / 20) * xf;
+        }
       }
     });
     var gpaEl = document.getElementById("pp-grade-gpa-display");
     if (!gpaEl) return;
     if (totalC === 0) {
-      gpaEl.innerHTML = "选择课程以计算 GPA";
+      gpaEl.innerHTML = "选择课程以计算学分绩";
     } else {
       var gpa = totalW / totalC;
-      gpaEl.innerHTML = "已选 " + selectedIds.size + " 门 / " + totalC.toFixed(1) + " 学分 &nbsp; GPA: <strong>" + gpa.toFixed(4) + "</strong>";
+      gpaEl.innerHTML = "已选 " + selectedIds.size + " 门 / " + totalC.toFixed(1) + " 学分 &nbsp; 加权平均学分绩: <strong>" + gpa.toFixed(4) + "</strong>";
     }
   }
 
