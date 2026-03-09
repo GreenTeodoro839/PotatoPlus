@@ -136,9 +136,30 @@
       margin: 20px 0 10px;
       padding-bottom: 6px;
       border-bottom: 2px solid #f0e0ef;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
     .pp-semester-header:first-child {
       margin-top: 0;
+    }
+    .pp-sem-btns {
+      display: flex;
+      gap: 6px;
+    }
+    .pp-sem-btn {
+      font-size: 11px;
+      padding: 2px 10px;
+      border-radius: 12px;
+      border: 1px solid #90138b;
+      background: transparent;
+      color: #90138b;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .pp-sem-btn:hover {
+      background: #90138b;
+      color: #fff;
     }
     .pp-course-card {
       display: flex;
@@ -441,7 +462,49 @@
     semesters.forEach(function(sem) {
       var hdr = document.createElement("div");
       hdr.className = "pp-semester-header";
-      hdr.textContent = sem.display;
+
+      var title = document.createElement("span");
+      title.textContent = sem.display;
+
+      var btns = document.createElement("span");
+      btns.className = "pp-sem-btns";
+
+      var selBtn = document.createElement("button");
+      selBtn.className = "pp-sem-btn";
+      selBtn.textContent = "全选";
+      selBtn.addEventListener("click", function(e) {
+        e.stopPropagation();
+        sem.courses.forEach(function(item) {
+          if (!selectedIds.has(item.idx)) {
+            selectedIds.add(item.idx);
+            var card = document.querySelector('.pp-course-card[data-idx="' + item.idx + '"]');
+            if (card) { card.classList.add("pp-selected"); var cb = card.querySelector("input"); if (cb) cb.checked = true; }
+          }
+        });
+        calcGPA();
+        savePrefs(Object.assign(loadPrefs(), { selectedIds: Array.from(selectedIds) }));
+      });
+
+      var deselBtn = document.createElement("button");
+      deselBtn.className = "pp-sem-btn";
+      deselBtn.textContent = "全不选";
+      deselBtn.addEventListener("click", function(e) {
+        e.stopPropagation();
+        sem.courses.forEach(function(item) {
+          if (selectedIds.has(item.idx)) {
+            selectedIds.delete(item.idx);
+            var card = document.querySelector('.pp-course-card[data-idx="' + item.idx + '"]');
+            if (card) { card.classList.remove("pp-selected"); var cb = card.querySelector("input"); if (cb) cb.checked = false; }
+          }
+        });
+        calcGPA();
+        savePrefs(Object.assign(loadPrefs(), { selectedIds: Array.from(selectedIds) }));
+      });
+
+      btns.appendChild(selBtn);
+      btns.appendChild(deselBtn);
+      hdr.appendChild(title);
+      hdr.appendChild(btns);
       body.appendChild(hdr);
       sem.courses.forEach(function(item) {
         body.appendChild(buildCourseCard(item.c, item.idx));
