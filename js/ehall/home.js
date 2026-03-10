@@ -1,8 +1,14 @@
 // ehall/home.js - ehall 首页注入 PotatoPlus 欢迎卡片 + 菜单卡片
-// 注入位置: .hall 容器内, .role-matter 之前
+// 注入位置: .hall > .body 内, .role-matter 之前
 
 (function () {
   "use strict";
+
+  // ehall appShow 入口（需登录态才能正确跳转到子应用）
+  var EHALL_BASE = "https://ehall.nju.edu.cn/appShow?appId=";
+  var APP_GRADE = EHALL_BASE + "4768574631264620";   // 成绩查询
+  var APP_EVAL  = EHALL_BASE + "5856333445645704";   // 本-网上评教
+  var APP_XK    = "https://xk.nju.edu.cn/";          // 选课
 
   var CSS = `
     .pp-home-container {
@@ -19,9 +25,12 @@
       }
     }
 
-    /* 菜单卡片 */
+    /* 菜单卡片 — 磨砂半透明 */
     .pp-menu-card {
-      background: linear-gradient(-70deg, rgb(154, 110, 179), rgb(67, 126, 202));
+      background: rgba(255,255,255,.15);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,.2);
       border-radius: 24px;
       padding: 22px 28px;
       color: rgba(255,255,255,.9);
@@ -32,10 +41,11 @@
       font-size: 22px;
       font-weight: bold;
       margin-bottom: 4px;
+      color: #1d1d1f;
     }
     .pp-menu-week {
       font-size: 16px;
-      color: rgba(255,255,255,.8);
+      color: #4a4a4c;
       margin-bottom: 18px;
     }
     .pp-menu-buttons {
@@ -55,48 +65,32 @@
       cursor: pointer;
       font-family: inherit;
       text-decoration: none;
-      transition: filter .15s;
+      transition: all .2s ease;
+      background: rgba(124, 7, 119, .65);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
     .pp-menu-btn:hover {
-      filter: brightness(1.1);
+      background: rgba(124, 7, 119, .85);
       color: white;
       text-decoration: none;
-    }
-    .pp-menu-btn.primary {
-      background: rgb(30, 50, 180);
-    }
-    .pp-menu-btn.secondary {
-      background: rgba(255,255,255,.2);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(124, 7, 119, .3);
     }
     .pp-menu-btn-icon {
       font-size: 20px;
       flex-shrink: 0;
     }
-    .pp-menu-btn-inset {
-      margin-left: auto;
-      background: white;
-      color: rgb(30, 50, 180);
-      border-radius: 10px;
-      padding: 4px 12px;
-      font-size: 13px;
-      border: none;
-      cursor: pointer;
-      text-decoration: none;
-      font-family: inherit;
-      transition: filter .15s;
-    }
-    .pp-menu-btn-inset:hover {
-      filter: brightness(.95);
-      color: rgb(30, 50, 180);
-      text-decoration: none;
-    }
 
-    /* 欢迎卡片 */
+    /* 欢迎卡片 — 磨砂半透明 */
     .pp-welcome-card {
-      background: #4b5e7b;
+      background: rgba(255,255,255,.15);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,.2);
       border-radius: 24px;
       padding: 22px 28px;
-      color: rgba(255,255,255,.82);
+      color: #1d1d1f;
       flex: 1;
       min-width: 0;
       display: flex;
@@ -117,18 +111,18 @@
     }
     .pp-welcome-line.bulletin .pp-icon,
     .pp-welcome-line.bulletin span {
-      color: #8ecafc;
+      color: #7c0777;
     }
     .pp-welcome-spacer {
       flex: 1;
     }
     .pp-welcome-links {
       font-size: 12px;
-      color: rgba(255,255,255,.65);
+      color: #888;
       margin-top: 10px;
     }
     .pp-welcome-links a {
-      color: rgba(255,255,255,.65);
+      color: #7c0777;
       text-decoration: none;
       margin: 0 5px;
       transition: color .15s;
@@ -137,7 +131,7 @@
       margin-left: 0;
     }
     .pp-welcome-links a:hover {
-      color: white;
+      color: #a00a9a;
     }
   `;
 
@@ -172,12 +166,15 @@
       <div class="pp-menu-date">${getDateString()}</div>
       <div class="pp-menu-week">${getWeekString()}</div>
       <div class="pp-menu-buttons">
-        <a class="pp-menu-btn primary" href="https://ehallapp.nju.edu.cn/jwapp/sys/cjcx/" target="_blank">
+        <a class="pp-menu-btn" href="${APP_GRADE}" target="_blank">
           <span class="pp-menu-btn-icon">📊</span>
           成绩查询
-          <a class="pp-menu-btn-inset" href="https://xk.nju.edu.cn/" target="_blank">＋ 选课</a>
         </a>
-        <a class="pp-menu-btn secondary" href="https://ehallapp.nju.edu.cn/jwapp/sys/wspjyyapp/" target="_blank">
+        <a class="pp-menu-btn" href="${APP_XK}" target="_blank">
+          <span class="pp-menu-btn-icon">📚</span>
+          选课
+        </a>
+        <a class="pp-menu-btn" href="${APP_EVAL}" target="_blank">
           <span class="pp-menu-btn-icon">📝</span>
           一键评教
         </a>
@@ -193,7 +190,7 @@
 
     welcome.innerHTML = `
       <div class="pp-welcome-line">
-        <span class="pp-icon" style="color: #6ddf6d;">✓</span>
+        <span class="pp-icon" style="color: #4caf50;">✓</span>
         <span>PotatoPlus ${version ? "v" + version + " " : ""}已加载</span>
       </div>
       <div class="pp-welcome-line bulletin">
@@ -260,7 +257,6 @@
     if (roleMatter) {
       body.insertBefore(cards, roleMatter);
     } else {
-      // fallback: 直接追加到 .body 开头
       body.insertBefore(cards, body.firstChild);
     }
     getBulletin();
