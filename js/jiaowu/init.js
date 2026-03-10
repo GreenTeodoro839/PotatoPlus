@@ -70,7 +70,7 @@ window.potatojw_intl = function() {
     }
     
     if ($$("div#TopLink").length > 0) {
-      $$("div#TopLink").html(`<span class="pjw-mini-button" onclick="window.open('https://cubiccm.ddns.net/potatoplus')">v${pjw.version}</span>`);
+      $$("div#TopLink").html(`<span class="pjw-mini-button" onclick="window.open('https://potatoplus.zcec.top/potatoplus')">v${pjw.version}</span>`);
     }
   } else if (pjw.site == "xk") {
     pjw.preferences.enabled && pjw.preferences.share_usage_data && $("head").append($(google_analytics_js));
@@ -187,12 +187,12 @@ window.potatojw_intl = function() {
 
   var getBulletin = function() {
     if ((pjw.data.bulletin_update_timestamp || 0) + 300000 <= new Date().getTime()) {
-      const html = `<iframe src="https://cubiccm.ddns.net/apps/potatoplus-bulletin/?version=${pjw.version}&share_stats=${
+      const html = `<iframe src="https://potatoplus.zcec.top/apps/potatoplus-bulletin/?version=${pjw.version}&share_stats=${
         (pjw.preferences.share_usage_data || pjw.preferences.login_settings?.share_stats) ? 1 : 0
       }&site=${pjw.site}" width="300" height="300" style="display: none;"></iframe>`;
     
       $$(window).on("message", (e) => {
-        if (e.originalEvent.origin !== "https://cubiccm.ddns.net") return;
+        if (e.originalEvent.origin !== "https://potatoplus.zcec.top") return;
         if (e?.originalEvent?.data) {
           let data = {};
           try {

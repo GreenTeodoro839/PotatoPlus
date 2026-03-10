@@ -59,4 +59,4 @@ GPL-3.0 — 详见 [LICENSE](LICENSE)
 
 ## Credits
 
-By [Limos](https://cubiccm.ddns.net/about)
+By [Limos](https://potatoplus.zcec.top/about)

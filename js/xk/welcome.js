@@ -268,13 +268,13 @@ function initXKWelcome(getBulletin) {
     <div class="pjw-xk-welcome-card">
       <p id="pjw-bulletin-content" style="font-size: 14px;">${pjw.data.bulletin_content || ""}</p>
       <div class="pjw-xk-welcome-link-container">
-        <a href="https://cubiccm.ddns.net/potatoplus" target="_blank" style="font-weight: bold;">PotatoPlus ${pjw.version}</a>
+        <a href="https://potatoplus.zcec.top/potatoplus" target="_blank" style="font-weight: bold;">PotatoPlus ${pjw.version}</a>
         <a href="https://github.com/cubiccm/potatoplus" target="_blank">GitHub</a>
       </div>
       <div class="pjw-xk-welcome-link-container">
-        <a href="https://cubiccm.ddns.net/potato-mailing-list/" target="_blank">加入邮件列表</a>
+        <a href="https://potatoplus.zcec.top/potato-mailing-list/" target="_blank">加入邮件列表</a>
         <a href="mailto:illimosity@gmail.com">发送反馈邮件</a>
-        <a href="https://cubiccm.ddns.net/about" target="_blank">@Limos</a>
+        <a href="https://potatoplus.zcec.top/about" target="_blank">@Limos</a>
       </div>
     </div>
   `;

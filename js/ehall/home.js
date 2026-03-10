@@ -196,9 +196,9 @@
       </div>
       <div class="pp-welcome-spacer"></div>
       <div class="pp-welcome-links">
-        <a href="https://cubiccm.ddns.net/potatoplus" target="_blank">PotatoPlus ${version ? "v" + version : ""}</a>
+        <a href="https://potatoplus.zcec.top/potatoplus" target="_blank">PotatoPlus ${version ? "v" + version : ""}</a>
         <a href="https://github.com/GreenTeodoro839/PotatoPlus" target="_blank">GitHub</a>
-        <a href="https://cubiccm.ddns.net/potato-mailing-list/" target="_blank">加入邮件列表</a>
+        <a href="https://potatoplus.zcec.top/potato-mailing-list/" target="_blank">加入邮件列表</a>
       </div>
     `;
 
@@ -212,7 +212,7 @@
     if ((pjw.data.bulletin_update_timestamp || 0) + 300000 > new Date().getTime()) return;
 
     var iframe = document.createElement("iframe");
-    iframe.src = "https://cubiccm.ddns.net/apps/potatoplus-bulletin/?version=" +
+    iframe.src = "https://potatoplus.zcec.top/apps/potatoplus-bulletin/?version=" +
       encodeURIComponent(pjw.version || "") +
       "&share_stats=" + ((pjw.preferences.share_usage_data || (pjw.preferences.login_settings && pjw.preferences.login_settings.share_stats)) ? 1 : 0) +
       "&site=ehall";
@@ -222,7 +222,7 @@
     document.body.appendChild(iframe);
 
     window.addEventListener("message", function handler(e) {
-      if (e.origin !== "https://cubiccm.ddns.net") return;
+      if (e.origin !== "https://potatoplus.zcec.top") return;
       if (e.data) {
         try {
           var data = JSON.parse(e.data);
