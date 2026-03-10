@@ -25,12 +25,11 @@
       }
     }
 
-    /* 菜单卡片 — 磨砂半透明 */
+    /* 菜单卡片 — 紫蓝渐变 + 磨砂 */
     .pp-menu-card {
-      background: rgba(255,255,255,.15);
+      background: linear-gradient(-70deg, rgba(154, 110, 179, .85), rgba(67, 126, 202, .85));
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255,255,255,.2);
       border-radius: 24px;
       padding: 22px 28px;
       color: rgba(255,255,255,.9);
@@ -41,11 +40,10 @@
       font-size: 22px;
       font-weight: bold;
       margin-bottom: 4px;
-      color: #1d1d1f;
     }
     .pp-menu-week {
       font-size: 16px;
-      color: #4a4a4c;
+      color: rgba(255,255,255,.8);
       margin-bottom: 18px;
     }
     .pp-menu-buttons {
@@ -66,31 +64,30 @@
       font-family: inherit;
       text-decoration: none;
       transition: all .2s ease;
-      background: rgba(124, 7, 119, .65);
+      background: rgba(255,255,255,.2);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
     }
     .pp-menu-btn:hover {
-      background: rgba(124, 7, 119, .85);
+      background: rgba(255,255,255,.35);
       color: white;
       text-decoration: none;
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(124, 7, 119, .3);
+      box-shadow: 0 4px 12px rgba(0,0,0,.15);
     }
     .pp-menu-btn-icon {
       font-size: 20px;
       flex-shrink: 0;
     }
 
-    /* 欢迎卡片 — 磨砂半透明 */
+    /* 欢迎卡片 — 深灰蓝 + 磨砂 */
     .pp-welcome-card {
-      background: rgba(255,255,255,.15);
+      background: rgba(75, 94, 123, .85);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255,255,255,.2);
       border-radius: 24px;
       padding: 22px 28px;
-      color: #1d1d1f;
+      color: rgba(255,255,255,.82);
       flex: 1;
       min-width: 0;
       display: flex;
@@ -111,18 +108,18 @@
     }
     .pp-welcome-line.bulletin .pp-icon,
     .pp-welcome-line.bulletin span {
-      color: #7c0777;
+      color: #8ecafc;
     }
     .pp-welcome-spacer {
       flex: 1;
     }
     .pp-welcome-links {
       font-size: 12px;
-      color: #888;
+      color: rgba(255,255,255,.65);
       margin-top: 10px;
     }
     .pp-welcome-links a {
-      color: #7c0777;
+      color: rgba(255,255,255,.65);
       text-decoration: none;
       margin: 0 5px;
       transition: color .15s;
@@ -131,7 +128,7 @@
       margin-left: 0;
     }
     .pp-welcome-links a:hover {
-      color: #a00a9a;
+      color: white;
     }
   `;
 
