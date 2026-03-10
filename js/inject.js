@@ -40,6 +40,7 @@ var modes_reg = {
   authserver: /\/\/authserver\.nju\.edu\.cn\/authserver\/login/i,
   ehall_eval: /ehallapp\.nju\.edu\.cn\/jwapp\/sys\/wspjyyapp/i,
   ehall_grade: /ehallapp\.nju\.edu\.cn\/jwapp\/sys\/cjcx/i,
+  ehall_home: /ehall\.nju\.edu\.cn\/ywtb-portal\//i,
 };
 
 let pjw_mode = "";
@@ -106,6 +107,13 @@ if (pjw_mode == "ehall_eval") {
   injectScripts([
     "js/common/core.js",
     "js/ehall/grade.js",
+  ]);
+
+} else if (pjw_mode == "ehall_home") {
+  // ehall 首页
+  injectScripts([
+    "js/common/core.js",
+    "js/ehall/home.js",
   ]);
 
 } else if (pjw_mode != "") {

@@ -35,6 +35,12 @@
       "js": ["js/inject.js"],
       "run_at": "document_start",
       "all_frames": true
+    },
+    {
+      "matches": ["*://ehall.nju.edu.cn/ywtb-portal/*"],
+      "js": ["js/inject.js"],
+      "run_at": "document_start",
+      "all_frames": true
     }
   ],
   "web_accessible_resources": [{
