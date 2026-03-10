@@ -246,17 +246,23 @@
   }
 
   function inject() {
-    // 等待 .hall 和 .role-matter 都渲染完
-    var hall = document.querySelector(".hall");
-    var roleMatter = document.querySelector(".role-matter");
-    if (!hall || !roleMatter) return false;
+    // 实际 DOM: .hall > .body > .role-matter
+    // 在 .body 内、.role-matter 之前注入
+    var body = document.querySelector(".hall > .body");
+    var roleMatter = document.querySelector(".hall > .body > .role-matter");
+    if (!body) return false;
 
     // 避免重复注入
     if (document.getElementById("pp-home-container")) return true;
 
     injectCSS();
     var cards = buildCards();
-    hall.insertBefore(cards, roleMatter);
+    if (roleMatter) {
+      body.insertBefore(cards, roleMatter);
+    } else {
+      // fallback: 直接追加到 .body 开头
+      body.insertBefore(cards, body.firstChild);
+    }
     getBulletin();
     console.log("[PotatoPlus] ehall 首页卡片已注入");
     return true;
