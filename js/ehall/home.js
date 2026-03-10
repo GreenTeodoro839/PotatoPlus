@@ -221,7 +221,7 @@
     iframe.style.display = "none";
     document.body.appendChild(iframe);
 
-    window.addEventListener("message", function handler(e) {
+    function bulletinHandler(e) {
       if (e.origin !== "https://potatoplus.zcec.top") return;
       if (e.data) {
         try {
@@ -231,12 +231,14 @@
             pjw.data.bulletin_update_timestamp = new Date().getTime();
             var el = document.getElementById("pp-home-bulletin");
             if (el) el.innerHTML = data.content;
+            window.removeEventListener("message", bulletinHandler);
           }
         } catch (err) {
           console.warn("[PotatoPlus] bulletin parse error:", err);
         }
       }
-    });
+    }
+    window.addEventListener("message", bulletinHandler);
   }
 
   function inject() {

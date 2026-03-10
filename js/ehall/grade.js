@@ -575,7 +575,7 @@
     selectAllBtn.textContent = "全选";
     selectAllBtn.addEventListener("click", function() {
       allCourses.forEach(function(c, i) {
-        if (parseFloat(c.XF) > 0 && c.ZCJ != null && c.ZCJ !== "") selectedIds.add(i);
+        if (parseFloat(c.XF) > 0 && c.ZCJ != null && c.ZCJ !== "" && String(c.DJCJLXDM) === "100") selectedIds.add(i);
       });
       renderCourses();
     });

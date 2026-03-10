@@ -54,11 +54,12 @@
     "*://*.nju.edu.cn/jiaowu*",
     "*://xk.nju.edu.cn/*",
     "*://authserver.nju.edu.cn/*",
-    "*://ehallapp.nju.edu.cn/*"
+    "*://ehallapp.nju.edu.cn/*",
+    "*://ehall.nju.edu.cn/*"
   ],
   "browser_specific_settings": {
     "gecko": {
-      "update_url": "https://github.com/cubiccm/potatoplus/releases/latest/download/updates.json"
+      "update_url": "https://github.com/GreenTeodoro839/PotatoPlus/releases/latest/download/updates.json"
     }
   }
 }
