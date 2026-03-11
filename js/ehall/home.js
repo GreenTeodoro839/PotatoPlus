@@ -147,7 +147,21 @@
   }
 
   function getWeekString() {
-    // 占位符，后续替换为实际教学周获取逻辑
+    // 尝试从缓存获取教学周信息
+    try {
+      var cache = JSON.parse(localStorage.getItem("potatoplus_schedule_cache"));
+      if (cache && cache.semesterStartMonday) {
+        var start = new Date(cache.semesterStartMonday);
+        var now = new Date();
+        // 回退到本周一
+        var day = now.getDay(); var diff = day === 0 ? -6 : 1 - day;
+        var nowMon = new Date(now); nowMon.setDate(nowMon.getDate() + diff); nowMon.setHours(0,0,0,0);
+        var startMon = new Date(start); var sday = startMon.getDay(); var sdiff = sday === 0 ? -6 : 1 - sday;
+        startMon.setDate(startMon.getDate() + sdiff); startMon.setHours(0,0,0,0);
+        var week = Math.floor((nowMon - startMon) / (7 * 24 * 3600 * 1000)) + 1;
+        if (week >= 1) return "第" + week + "周";
+      }
+    } catch (e) {}
     return "教学周";
   }
 
@@ -160,7 +174,10 @@
     var menu = document.createElement("div");
     menu.className = "pp-menu-card";
     menu.innerHTML = `
-      <div class="pp-menu-date">${getDateString()}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="pp-menu-date">${getDateString()}</div>
+        <button class="pp-sched-open" id="pp-schedule-btn" title="查看课表">📅 课表</button>
+      </div>
       <div class="pp-menu-week">${getWeekString()}</div>
       <div class="pp-menu-buttons">
         <a class="pp-menu-btn" href="${APP_GRADE}" target="_blank">
@@ -259,6 +276,16 @@
       body.insertBefore(cards, body.firstChild);
     }
     getBulletin();
+
+    // 课表按钮绑定
+    var schedBtn = document.getElementById("pp-schedule-btn");
+    if (schedBtn) {
+      schedBtn.addEventListener("click", function () {
+        if (window.ppSchedule) window.ppSchedule.open();
+        else console.warn("[PotatoPlus] schedule.js 未加载");
+      });
+    }
+
     console.log("[PotatoPlus] ehall 首页卡片已注入");
     return true;
   }

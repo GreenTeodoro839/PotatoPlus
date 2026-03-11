@@ -113,6 +113,7 @@ if (pjw_mode == "ehall_eval") {
   // ehall 首页
   injectScripts([
     "js/common/core.js",
+    "js/ehall/schedule.js",
     "js/ehall/home.js",
   ]);
 

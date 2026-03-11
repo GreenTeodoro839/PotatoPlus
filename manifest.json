@@ -55,7 +55,8 @@
     "*://xk.nju.edu.cn/*",
     "*://authserver.nju.edu.cn/*",
     "*://ehallapp.nju.edu.cn/*",
-    "*://ehall.nju.edu.cn/*"
+    "*://ehall.nju.edu.cn/*",
+    "*://potatoplus.zcec.top/*"
   ],
   "browser_specific_settings": {
     "gecko": {
