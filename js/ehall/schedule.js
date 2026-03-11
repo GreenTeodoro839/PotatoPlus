@@ -1,10 +1,10 @@
 // ehall/schedule.js - 课表弹窗
+// 数据通过 background service worker 获取（绕过 CORS）
 (function () {
   "use strict";
 
-  var SEMESTER_API = "https://potatoplus.zcec.top/potatoplus-schedule/semester.json";
-  var TERM_API = "https://ehallapp.nju.edu.cn/jwapp/sys/wdkb/modules/jshkcb/xnxqcx.do";
-  var SCHED_API = "https://ehallapp.nju.edu.cn/jwapp/sys/wdkb/modules/xskcb/xskcb.do";
+  if (!window.browser) window.browser = window.chrome;
+
   var CACHE_KEY = "potatoplus_schedule_cache";
   var CACHE_TTL = 7 * 24 * 3600 * 1000;
   var SLOT_H = 52;
@@ -23,14 +23,6 @@
 
   // --- utils ---
   function esc(s){var d=document.createElement("div");d.textContent=s;return d.innerHTML;}
-  function parseWeeks(t,b){
-    if(typeof b==="string"&&b.length>0){var w=[];for(var i=0;i<b.length;i++)if(b[i]==="1")w.push(i+1);if(w.length>0)return w;}
-    if(!t)return[];var ws=[];
-    t.split(",").forEach(function(p){var m=p.match(/(\d+)(?:-(\d+))?周?(?:\((单|双)\))?/);if(!m)return;
-      var s=+m[1],e=m[2]?+m[2]:s,f=m[3]==="单"?1:m[3]==="双"?2:0;
-      for(var w=s;w<=e;w++)if(f===0||(f===1&&w%2===1)||(f===2&&w%2===0))if(ws.indexOf(w)<0)ws.push(w);
-    });return ws.sort(function(a,b){return a-b;});
-  }
   function weekStr(ws){
     if(!ws||!ws.length)return"";if(ws.length===1)return"第"+ws[0]+"周";
     var b=ws[0]+"-"+ws[ws.length-1]+"周",ok=true;
@@ -48,32 +40,25 @@
   function getCache(){try{var c=JSON.parse(localStorage.getItem(CACHE_KEY));return c&&c.timestamp&&c.courses?c:null;}catch(e){return null;}}
   function setCache(d){var obj={timestamp:Date.now(),courses:d.courses,termName:d.termName};if(d.semesterStartMonday)obj.semesterStartMonday=d.semesterStartMonday;localStorage.setItem(CACHE_KEY,JSON.stringify(obj));}
 
-  // --- fetch ---
-  function syncGet(url){var x=new XMLHttpRequest();x.open("GET",url,false);x.send();if(x.status!==200)throw new Error("HTTP "+x.status);return JSON.parse(x.responseText);}
-  function syncPost(url){var x=new XMLHttpRequest();x.open("POST",url,false);x.send();if(x.status!==200)throw new Error("HTTP "+x.status);return JSON.parse(x.responseText);}
-
-  function fetchFromServer(){
-    var td=syncPost(TERM_API),rows=(td.datas&&(td.datas.xnxqcx||td.datas.jshkcb)||{}).rows;
-    if(!rows||!rows.length)throw new Error("学期列表为空");
-    rows.sort(function(a,b){return(a.PX||0)-(b.PX||0);});
-    var t=rows[0],code=t.DM||t.XNXQDM,name=t.MC||t.XNXQDM_DISPLAY||code;
-    var sd=syncGet(SCHED_API+"?XNXQDM="+code);
-    var raws=(sd.datas&&sd.datas.xskcb&&sd.datas.xskcb.rows)||[];
-    var courses=[];
-    raws.forEach(function(r){
-      var w=parseWeeks(r.ZCMC,r.SKZC);if(!w.length)return;
-      courses.push({name:r.KCM||"",classroom:r.JASMC||"",classNumber:r.KCH||"",teacher:r.SKJS||"",
-        weeks:w,weekTime:+r.SKXQ||0,startTime:+r.KSJC||0,endTime:+r.JSJC||0,weeksStr:r.ZCMC||""});
+  // --- fetch via background ---
+  function fetchViaBackground(force){
+    return new Promise(function(resolve,reject){
+      browser.runtime.sendMessage({type:"pp-schedule-fetch",force:!!force},function(resp){
+        if(browser.runtime.lastError){reject(new Error(browser.runtime.lastError.message));return;}
+        if(!resp){reject(new Error("无响应"));return;}
+        if(resp.error){reject(new Error(resp.error));return;}
+        resolve(resp);
+      });
     });
-    var sem=null;try{sem=syncGet(SEMESTER_API).semester_start_monday||null;}catch(e){}
-    return{courses:courses,termName:name,semesterStartMonday:sem};
   }
 
-  function getData(force){
+  async function getData(force){
     var c=getCache();
     if(!force&&c&&Date.now()-c.timestamp<CACHE_TTL)return c;
-    if(!force&&c){try{var f=fetchFromServer();setCache(f);return f;}catch(e){return c;}}
-    var d=fetchFromServer();setCache(d);return d;
+    if(!force&&c){
+      try{var f=await fetchViaBackground(false);setCache(f);return f;}catch(e){console.warn("[PotatoPlus] 刷新失败，用旧缓存:",e);return c;}
+    }
+    var d=await fetchViaBackground(true);setCache(d);return d;
   }
 
   // --- state ---
@@ -114,29 +99,38 @@
     document.addEventListener("keydown",escH);
 
     modal.innerHTML='<div class="pp-sched-load"><div class="pp-sched-spin"></div><span>正在加载课表...</span></div>';
-    setTimeout(function(){
-      try{
-        data=getData(false);semStart=data.semesterStartMonday;
-        if(semStart)curWeek=Math.max(1,calcWeek(semStart));
-        buildModal(modal);
-      }catch(e){
-        console.error("[PotatoPlus]",e);
-        modal.innerHTML='<div class="pp-sched-err"><div style="font-size:28px">😥</div><div class="pp-sched-err-m">'+esc(e.message||"加载失败")+'</div><button class="pp-sched-retry" onclick="this.parentElement.innerHTML=\'<div class=pp-sched-spin></div>\'">重试</button></div>';
-      }
-    },50);
+
+    getData(false).then(function(d){
+      data=d;semStart=d.semesterStartMonday;
+      if(semStart)curWeek=Math.max(1,calcWeek(semStart));
+      buildModal(modal);
+    }).catch(function(e){
+      console.error("[PotatoPlus]",e);
+      showError(modal,e.message);
+    });
   }
 
   function closeSchedule(){rmTip();var o=document.getElementById("pp-sched-ov");if(o)o.remove();}
 
+  function showError(modal,msg){
+    modal.innerHTML='<div class="pp-sched-err"><div style="font-size:28px">😥</div><div class="pp-sched-err-m">'+esc(msg||"加载失败")+'</div><button class="pp-sched-retry">重试</button></div>';
+    modal.querySelector(".pp-sched-retry").addEventListener("click",function(){
+      modal.innerHTML='<div class="pp-sched-load"><div class="pp-sched-spin"></div><span>重新加载中...</span></div>';
+      fetchViaBackground(true).then(function(d){
+        setCache(d);data=d;semStart=d.semesterStartMonday;
+        if(semStart)curWeek=Math.max(1,calcWeek(semStart));
+        buildModal(modal);
+      }).catch(function(e){showError(modal,e.message);});
+    });
+  }
+
   function buildModal(modal){
     modal.innerHTML="";
-    // header
     var hd=document.createElement("div");hd.className="pp-sched-hd";
     var hl=document.createElement("div");hl.style.cssText="display:flex;align-items:center";
     hl.innerHTML='<span class="pp-sched-tt">📅 课表</span><span class="pp-sched-st">'+esc(data.termName||"")+'</span>';
     var hr=document.createElement("div");hr.className="pp-sched-acts";
 
-    // week selector
     var ws=document.createElement("div");ws.className="pp-wk-sel";
     var pb=document.createElement("button");pb.className="pp-wk-b";pb.textContent="◀";
     pb.onclick=function(){if(curWeek>1){curWeek--;renderGrid();}};
@@ -146,14 +140,16 @@
     nb.onclick=function(){curWeek++;renderGrid();};
     ws.appendChild(pb);ws.appendChild(wl);ws.appendChild(nb);
 
-    // refresh
-    var rb=document.createElement("button");rb.className="pp-sched-ib";rb.textContent="🔄";rb.title="刷新课表";
-    rb.onclick=function(){rb.classList.add("spin");setTimeout(function(){
-      try{var f=fetchFromServer();setCache(f);data=f;semStart=f.semesterStartMonday;if(semStart)curWeek=Math.max(1,calcWeek(semStart));renderGrid();}
-      catch(e){alert("刷新失败: "+e.message);}rb.classList.remove("spin");
-    },100);};
+    var rb=document.createElement("button");rb.className="pp-sched-ib";rb.id="pp-sched-refresh";rb.textContent="🔄";rb.title="刷新课表";
+    rb.onclick=function(){
+      rb.classList.add("spin");
+      fetchViaBackground(true).then(function(f){
+        setCache(f);data=f;semStart=f.semesterStartMonday;
+        if(semStart)curWeek=Math.max(1,calcWeek(semStart));
+        renderGrid();
+      }).catch(function(e){alert("刷新失败: "+e.message);}).finally(function(){rb.classList.remove("spin");});
+    };
 
-    // close
     var cb=document.createElement("button");cb.className="pp-sched-ib";cb.textContent="✕";cb.onclick=closeSchedule;
 
     hr.appendChild(ws);hr.appendChild(rb);hr.appendChild(cb);
@@ -168,7 +164,6 @@
     rmTip();
     var body=document.getElementById("pp-sched-body");if(!body)return;body.innerHTML="";
 
-    // update week label
     var wl=document.getElementById("pp-wk-l");
     if(wl){
       var actual=semStart?calcWeek(semStart):curWeek;
@@ -182,7 +177,6 @@
 
     var grid=document.createElement("div");grid.className="pp-sched-grid";
 
-    // header row: corner + 7 days
     var corner=document.createElement("div");corner.className="pp-sched-corner";grid.appendChild(corner);
     var today=new Date();var todayDow=today.getDay();if(todayDow===0)todayDow=7;
     var todayWeek=semStart?calcWeek(semStart):null;
@@ -196,7 +190,6 @@
       grid.appendChild(dh);
     }
 
-    // time labels + grid rows
     for(var s=0;s<TIMES.length;s++){
       var tl=document.createElement("div");tl.className="pp-sched-tl";
       tl.innerHTML='<div class="pp-sched-tn">'+(s+1)+'</div><div class="pp-sched-tr">'+TIMES[s][0]+'</div>';
@@ -206,38 +199,20 @@
       grid.appendChild(row);
     }
 
-    // courses layer
     var layer=document.createElement("div");layer.className="pp-sched-layer";layer.id="pp-sched-layer";
     grid.appendChild(layer);
     body.appendChild(grid);
 
-    // position courses
-    // 先按 weekTime+startTime 分组检测重叠
-    var slots={};// key="day-slot" -> [{course, active}]
-    data.courses.forEach(function(c){
-      if(c.weekTime<1||c.weekTime>7||c.startTime<1)return;
-      var active=c.weeks.indexOf(curWeek)>=0;
-      for(var s=c.startTime;s<=c.endTime;s++){
-        var k=c.weekTime+"-"+s;
-        if(!slots[k])slots[k]=[];
-        slots[k].push({course:c,active:active});
-      }
-    });
-
-    // 计算重叠组
-    var placed={};// courseKey -> {col, totalCols}
+    // --- 重叠处理 ---
+    var placed={};
     function courseKey(c){return c.weekTime+"-"+c.startTime+"-"+c.endTime+"-"+c.name;}
 
-    // 按 weekTime+startTime 排序
     var sorted=data.courses.filter(function(c){return c.weekTime>=1&&c.weekTime<=7&&c.startTime>=1;});
     sorted.sort(function(a,b){return a.weekTime===b.weekTime?a.startTime-b.startTime:a.weekTime-b.weekTime;});
 
-    // 找重叠组：同一天 时间有交叉
-    var groups=[];// [{courses:[], cols:N}]
-    var used={};
+    var groups=[],used={};
     sorted.forEach(function(c){
       var k=courseKey(c);if(used[k])return;
-      // 找与 c 重叠的所有课
       var group=[c];used[k]=true;
       var changed=true;
       while(changed){
@@ -245,7 +220,6 @@
         sorted.forEach(function(c2){
           var k2=courseKey(c2);if(used[k2])return;
           if(c2.weekTime!==c.weekTime)return;
-          // 与 group 中任意一门有时间交叉
           for(var i=0;i<group.length;i++){
             var g=group[i];
             if(c2.startTime<=g.endTime&&c2.endTime>=g.startTime){
@@ -257,12 +231,10 @@
       groups.push(group);
     });
 
-    // 分配列
     groups.forEach(function(group){
       if(group.length===1){placed[courseKey(group[0])]={col:0,total:1};return;}
-      // 贪心分配列
       group.sort(function(a,b){return a.startTime-b.startTime;});
-      var cols=[];// cols[i] = endTime of last course in that column
+      var cols=[];
       group.forEach(function(c){
         var assigned=false;
         for(var i=0;i<cols.length;i++){
@@ -273,12 +245,10 @@
       group.forEach(function(c){placed[courseKey(c)].total=cols.length;});
     });
 
-    // 获取 grid 布局参数
-    // 课程层的定位需要用百分比（相对于 grid）
     var headerH=0;
-    var dh=grid.querySelector(".pp-sched-dh");
-    if(dh)headerH=dh.offsetHeight;
-    var tlW=44;// time label width
+    var dhEl=grid.querySelector(".pp-sched-dh");
+    if(dhEl)headerH=dhEl.offsetHeight;
+    var tlW=44;
 
     sorted.forEach(function(c){
       var k=courseKey(c);var p=placed[k];if(!p)return;
@@ -287,16 +257,13 @@
       el.className="pp-sched-course"+(active?"":" inactive");
       el.style.background=ccolor(c.name);
 
-      // 定位：用 calc
-      var dayFrac=(c.weekTime-1)+"/7";// 从第几列开始（0-based）
-      var colW=p.total>1?"calc((100% - "+tlW+"px) / 7 / "+p.total+")":"calc((100% - "+tlW+"px) / 7)";
       var left="calc("+tlW+"px + (100% - "+tlW+"px) / 7 * "+(c.weekTime-1)+(p.total>1?" + (100% - "+tlW+"px) / 7 / "+p.total+" * "+p.col:"")+ ")";
       var top=headerH+(c.startTime-1)*SLOT_H;
       var h=(c.endTime-c.startTime+1)*SLOT_H;
 
       el.style.left=left;
       el.style.top=top+"px";
-      el.style.width="calc((100% - "+tlW+"px) / 7"+(p.total>1?" / "+p.total:"")+  " - 2px)";
+      el.style.width="calc((100% - "+tlW+"px) / 7"+(p.total>1?" / "+p.total:"")+" - 2px)";
       el.style.height=(h-2)+"px";
 
       el.innerHTML='<div class="pp-sched-cn">'+esc(c.name)+'</div><div class="pp-sched-cl">'+esc(c.classroom)+'</div>';
@@ -361,12 +328,9 @@
 .pp-sched-err-m{font-size:14px;color:#e74c3c}
 .pp-sched-retry{padding:5px 14px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;color:#555;font-size:13px}
 .pp-sched-retry:hover{background:#f5f5f5}
-.pp-sched-open{background:none;border:none;color:rgba(255,255,255,.8);cursor:pointer;font-size:14px;padding:4px 10px;border-radius:8px;transition:all .15s;white-space:nowrap}
-.pp-sched-open:hover{background:rgba(255,255,255,.2);color:#fff}
     `;
     document.head.appendChild(s);
   }
 
-  // --- export ---
   window.ppSchedule={open:openSchedule,close:closeSchedule};
 })();
