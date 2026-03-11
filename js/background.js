@@ -15,6 +15,18 @@ browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 async function handleScheduleFetch(msg) {
   var force = msg.force || false;
 
+  // 0. 检查 ehall 登录状态
+  var loginResp = await fetch(
+    "https://ehall.nju.edu.cn/jsonp/ywtb/info/getUserInfoAndSchoolInfo",
+    { credentials: "include" }
+  );
+  if (!loginResp.ok) throw new Error("检查登录状态失败 (HTTP " + loginResp.status + ")");
+  var loginData = await loginResp.json();
+  var hasLogin = !!(loginData && loginData.data && loginData.data.hasLogin === true);
+  if (!hasLogin) {
+    throw new Error("请先登录 ehall 后再查看课表");
+  }
+
   // 1. 先激活 jwapp 应用（访问 appShow 页面获取 cookie/session）
   try {
     await fetch("https://ehall.nju.edu.cn/appShow?appId=4770397878132218", {
