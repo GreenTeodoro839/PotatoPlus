@@ -188,21 +188,25 @@
   }
 
   function fetchWeekAsync() {
-    if (!window.browser) window.browser = window.chrome;
-    try {
-      browser.runtime.sendMessage({type: "pp-schedule-fetch"}, function (resp) {
-        if (browser.runtime.lastError || !resp || resp.error) return;
-        // 存缓存
-        var obj = {timestamp: Date.now(), courses: resp.courses, termName: resp.termName};
-        if (resp.semesterStartMonday) obj.semesterStartMonday = resp.semesterStartMonday;
-        localStorage.setItem("potatoplus_schedule_cache", JSON.stringify(obj));
-        // 更新教学周显示
-        if (resp.semesterStartMonday) {
-          var el = document.querySelector(".pp-menu-week");
-          if (el) el.textContent = formatWeek(resp.semesterStartMonday);
-        }
-      });
-    } catch (e) {}
+    // 通过 postMessage -> bridge -> background 获取
+    var reqId = "week-" + Date.now();
+    function handler(event) {
+      if (event.source !== window) return;
+      if (!event.data || event.data.type !== "pp-schedule-response") return;
+      if (event.data.reqId !== reqId) return;
+      window.removeEventListener("message", handler);
+      var resp = event.data.data;
+      if (!resp || resp.error) return;
+      var obj = {timestamp: Date.now(), courses: resp.courses, termName: resp.termName};
+      if (resp.semesterStartMonday) obj.semesterStartMonday = resp.semesterStartMonday;
+      localStorage.setItem("potatoplus_schedule_cache", JSON.stringify(obj));
+      if (resp.semesterStartMonday) {
+        var el = document.querySelector(".pp-menu-week");
+        if (el) el.textContent = formatWeek(resp.semesterStartMonday);
+      }
+    }
+    window.addEventListener("message", handler);
+    window.postMessage({type: "pp-schedule-request", reqId: reqId, force: false}, "*");
   }
 
   function buildCards() {

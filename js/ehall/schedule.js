@@ -3,8 +3,6 @@
 (function () {
   "use strict";
 
-  if (!window.browser) window.browser = window.chrome;
-
   var CACHE_KEY = "potatoplus_schedule_cache";
   var CACHE_TTL = 7 * 24 * 3600 * 1000;
   var SLOT_H = 52;
@@ -40,15 +38,30 @@
   function getCache(){try{var c=JSON.parse(localStorage.getItem(CACHE_KEY));return c&&c.timestamp&&c.courses?c:null;}catch(e){return null;}}
   function setCache(d){var obj={timestamp:Date.now(),courses:d.courses,termName:d.termName};if(d.semesterStartMonday)obj.semesterStartMonday=d.semesterStartMonday;localStorage.setItem(CACHE_KEY,JSON.stringify(obj));}
 
-  // --- fetch via background ---
+  // --- fetch via background (through bridge content script) ---
+  var _reqId = 0;
+  var _pending = {};
+
+  window.addEventListener("message", function (event) {
+    if (event.source !== window) return;
+    if (!event.data || event.data.type !== "pp-schedule-response") return;
+    var id = event.data.reqId;
+    if (_pending[id]) {
+      if (event.data.error) _pending[id].reject(new Error(event.data.error));
+      else if (!event.data.data) _pending[id].reject(new Error("无响应"));
+      else if (event.data.data.error) _pending[id].reject(new Error(event.data.data.error));
+      else _pending[id].resolve(event.data.data);
+      delete _pending[id];
+    }
+  });
+
   function fetchViaBackground(force){
     return new Promise(function(resolve,reject){
-      browser.runtime.sendMessage({type:"pp-schedule-fetch",force:!!force},function(resp){
-        if(browser.runtime.lastError){reject(new Error(browser.runtime.lastError.message));return;}
-        if(!resp){reject(new Error("无响应"));return;}
-        if(resp.error){reject(new Error(resp.error));return;}
-        resolve(resp);
-      });
+      var id = ++_reqId;
+      _pending[id] = {resolve:resolve, reject:reject};
+      window.postMessage({type:"pp-schedule-request", reqId:id, force:!!force}, "*");
+      // 超时
+      setTimeout(function(){ if(_pending[id]){delete _pending[id];reject(new Error("请求超时"));} }, 30000);
     });
   }
 
