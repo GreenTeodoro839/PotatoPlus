@@ -4,6 +4,12 @@
 (function () {
   "use strict";
 
+  // 登录后默认跳首页(#/)，劫持到办事大厅(#/hall)让卡片正常注入
+  if (location.hash === "#/" || location.hash === "" || location.hash === "#") {
+    location.hash = "#/hall";
+    // 不 return，继续往下走等 MutationObserver 捕获 .hall > .body
+  }
+
   // ehall appShow 入口（需登录态才能正确跳转到子应用）
   var EHALL_BASE = "https://ehall.nju.edu.cn/appShow?appId=";
   var APP_GRADE = EHALL_BASE + "4768574631264620";   // 成绩查询
