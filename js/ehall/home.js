@@ -164,22 +164,45 @@
   }
 
   function getWeekString() {
-    // 尝试从缓存获取教学周信息
+    // 从缓存获取教学周
     try {
       var cache = JSON.parse(localStorage.getItem("potatoplus_schedule_cache"));
       if (cache && cache.semesterStartMonday) {
-        var start = new Date(cache.semesterStartMonday);
-        var now = new Date();
-        // 回退到本周一
-        var day = now.getDay(); var diff = day === 0 ? -6 : 1 - day;
-        var nowMon = new Date(now); nowMon.setDate(nowMon.getDate() + diff); nowMon.setHours(0,0,0,0);
-        var startMon = new Date(start); var sday = startMon.getDay(); var sdiff = sday === 0 ? -6 : 1 - sday;
-        startMon.setDate(startMon.getDate() + sdiff); startMon.setHours(0,0,0,0);
-        var week = Math.floor((nowMon - startMon) / (7 * 24 * 3600 * 1000)) + 1;
-        if (week >= 1) return "第" + week + "周";
+        return formatWeek(cache.semesterStartMonday);
       }
     } catch (e) {}
-    return "教学周";
+    // 无缓存，异步获取
+    fetchWeekAsync();
+    return "";
+  }
+
+  function formatWeek(startMonday) {
+    var start = new Date(startMonday);
+    var now = new Date();
+    var day = now.getDay(); var diff = day === 0 ? -6 : 1 - day;
+    var nowMon = new Date(now); nowMon.setDate(nowMon.getDate() + diff); nowMon.setHours(0,0,0,0);
+    var sday = start.getDay(); var sdiff = sday === 0 ? -6 : 1 - sday;
+    var startMon = new Date(start); startMon.setDate(startMon.getDate() + sdiff); startMon.setHours(0,0,0,0);
+    var week = Math.floor((nowMon - startMon) / (7 * 24 * 3600 * 1000)) + 1;
+    return week >= 1 ? "第" + week + "周" : "";
+  }
+
+  function fetchWeekAsync() {
+    if (!window.browser) window.browser = window.chrome;
+    try {
+      browser.runtime.sendMessage({type: "pp-schedule-fetch"}, function (resp) {
+        if (browser.runtime.lastError || !resp || resp.error) return;
+        // 存缓存
+        var obj = {timestamp: Date.now(), courses: resp.courses, termName: resp.termName};
+        if (resp.semesterStartMonday) obj.semesterStartMonday = resp.semesterStartMonday;
+        localStorage.setItem("potatoplus_schedule_cache", JSON.stringify(obj));
+        // 更新教学周显示
+        if (resp.semesterStartMonday) {
+          var el = document.querySelector(".pp-menu-week");
+          if (el) el.textContent = formatWeek(resp.semesterStartMonday);
+        }
+      });
+    } catch (e) {}
   }
 
   function buildCards() {
