@@ -93,6 +93,24 @@
     document.body.appendChild(tip);tipEl=tip;
     moveTip(ev);
   }
+  function showMultiTip(group,ev){
+    rmTip();var tip=document.createElement("div");tip.className="pp-sched-tip";
+    var html="";
+    group.forEach(function(c,idx){
+      var active=c.weeks.indexOf(curWeek)>=0;
+      var tag=active?'<span style="color:#5b6abf;font-size:11px;font-weight:600">本周</span> ':"";
+      var opacity=active?"":"opacity:.5;";
+      html+='<div style="'+opacity+(idx>0?"margin-top:10px;padding-top:10px;border-top:1px solid #eee;":"")+'">'+
+        '<div class="pp-tip-n">'+tag+esc(c.name)+'</div>'+
+        '<div class="pp-tip-r"><span class="pp-tip-i">📍</span>'+esc(c.classroom||"未知")+'</div>'+
+        '<div class="pp-tip-r"><span class="pp-tip-i">👤</span>'+esc(c.teacher||"未知")+'</div>'+
+        '<div class="pp-tip-r"><span class="pp-tip-i">📅</span>'+esc(weekStr(c.weeks))+'</div>'+
+        '</div>';
+    });
+    tip.innerHTML=html;
+    document.body.appendChild(tip);tipEl=tip;
+    moveTip(ev);
+  }
   function moveTip(e){
     if(!tipEl)return;var x=e.clientX+12,y=e.clientY+12;
     var tw=tipEl.offsetWidth,th=tipEl.offsetHeight;
@@ -217,7 +235,7 @@
     body.appendChild(grid);
 
     // --- 重叠处理 ---
-    var placed={};
+    // 分组：同天时间有交叉的课归为一组
     function courseKey(c){return c.weekTime+"-"+c.startTime+"-"+c.endTime+"-"+c.name;}
 
     var sorted=data.courses.filter(function(c){return c.weekTime>=1&&c.weekTime<=7&&c.startTime>=1;});
@@ -244,18 +262,14 @@
       groups.push(group);
     });
 
+    // 每组内排序：当前周有效的排前面，同为有效则 timeCount 大的优先
     groups.forEach(function(group){
-      if(group.length===1){placed[courseKey(group[0])]={col:0,total:1};return;}
-      group.sort(function(a,b){return a.startTime-b.startTime;});
-      var cols=[];
-      group.forEach(function(c){
-        var assigned=false;
-        for(var i=0;i<cols.length;i++){
-          if(c.startTime>cols[i]){cols[i]=c.endTime;placed[courseKey(c)]={col:i,total:0};assigned=true;break;}
-        }
-        if(!assigned){cols.push(c.endTime);placed[courseKey(c)]={col:cols.length-1,total:0};}
+      group.sort(function(a,b){
+        var aActive=a.weeks.indexOf(curWeek)>=0?1:0;
+        var bActive=b.weeks.indexOf(curWeek)>=0?1:0;
+        if(aActive!==bActive)return bActive-aActive; // active 排前面
+        return(b.endTime-b.startTime)-(a.endTime-a.startTime); // timeCount 大的优先
       });
-      group.forEach(function(c){placed[courseKey(c)].total=cols.length;});
     });
 
     var headerH=0;
@@ -263,26 +277,31 @@
     if(dhEl)headerH=dhEl.offsetHeight;
     var tlW=44;
 
-    sorted.forEach(function(c){
-      var k=courseKey(c);var p=placed[k];if(!p)return;
+    // 渲染：每组只显示第一个（当前周优先的那门），重叠标记角标
+    groups.forEach(function(group){
+      var c=group[0]; // 优先显示的课
       var active=c.weeks.indexOf(curWeek)>=0;
       var el=document.createElement("div");
       el.className="pp-sched-course"+(active?"":" inactive");
       el.style.background=ccolor(c.name);
 
-      var left="calc("+tlW+"px + (100% - "+tlW+"px) / 7 * "+(c.weekTime-1)+(p.total>1?" + (100% - "+tlW+"px) / 7 / "+p.total+" * "+p.col:"")+ ")";
+      var left="calc("+tlW+"px + (100% - "+tlW+"px) / 7 * "+(c.weekTime-1)+")";
       var top=headerH+(c.startTime-1)*SLOT_H;
       var h=(c.endTime-c.startTime+1)*SLOT_H;
 
       el.style.left=left;
       el.style.top=top+"px";
-      el.style.width="calc((100% - "+tlW+"px) / 7"+(p.total>1?" / "+p.total:"")+" - 2px)";
+      el.style.width="calc((100% - "+tlW+"px) / 7 - 2px)";
       el.style.height=(h-2)+"px";
 
       el.innerHTML='<div class="pp-sched-cn">'+esc(c.name)+'</div><div class="pp-sched-cl">'+esc(c.classroom)+'</div>';
-      if(p.total>1)el.innerHTML+='<div class="pp-sched-od">'+p.total+'</div>';
+      if(group.length>1)el.innerHTML+='<div class="pp-sched-od">'+group.length+'</div>';
 
-      el.addEventListener("mouseenter",function(e){showTip(c,e);});
+      // hover 显示当前课程详情，如果有重叠则列出全部
+      el.addEventListener("mouseenter",function(e){
+        if(group.length>1)showMultiTip(group,e);
+        else showTip(c,e);
+      });
       el.addEventListener("mousemove",function(e){moveTip(e);});
       el.addEventListener("mouseleave",function(){rmTip();});
       layer.appendChild(el);
