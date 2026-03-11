@@ -270,25 +270,33 @@
     document.head.appendChild(style);
   }
 
-  // --- Auto Open ---
-  function autoOpenWhenReady() {
+  // --- Button ---
+  var btnEl = null;
+
+  function injectButton() {
     var attempts = 0;
-    function tryOpen() {
+    function tryInject() {
       attempts++;
       var container = document.querySelector(".bh-container") || document.querySelector("[data-pageid]") || document.body;
       if (!container && attempts < 30) {
-        setTimeout(tryOpen, 500);
+        setTimeout(tryInject, 500);
         return;
       }
       injectCSS();
+      btnEl = document.createElement("div");
+      btnEl.id = "pp-grade-btn";
+      btnEl.textContent = "📊 PotatoPlus 成绩查询";
+      btnEl.addEventListener("click", openPanel);
+      document.body.appendChild(btnEl);
+      console.log("[PotatoPlus] 成绩查询按钮已注入");
+      // 保留按钮，同时页面加载后自动执行一次打开
       openPanel();
-      console.log("[PotatoPlus] 成绩查询面板已自动打开");
     }
 
     if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", function() { setTimeout(tryOpen, 1000); });
+      document.addEventListener("DOMContentLoaded", function() { setTimeout(tryInject, 1000); });
     } else {
-      setTimeout(tryOpen, 1000);
+      setTimeout(tryInject, 1000);
     }
   }
 
@@ -643,5 +651,5 @@
     }
   }
 
-  autoOpenWhenReady();
+  injectButton();
 })();
