@@ -130,6 +130,23 @@
     .pp-welcome-links a:hover {
       color: white;
     }
+
+    /* 课表按钮 */
+    .pp-sched-open {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,.8);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .pp-sched-open:hover {
+      background: rgba(255,255,255,.2);
+      color: #fff;
+    }
   `;
 
   function injectCSS() {
