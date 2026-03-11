@@ -71,9 +71,11 @@ async function handleScheduleFetch(msg) {
   var semesterStartMonday = null;
   try {
     var semResp = await fetch("https://potatoplus.zcec.top/potatoplus-schedule/semester.json");
+    console.log("[PotatoPlus bg] semester.json status:", semResp.status);
     if (semResp.ok) {
       var semData = await semResp.json();
       semesterStartMonday = semData.semester_start_monday || null;
+      console.log("[PotatoPlus bg] semester_start_monday:", semesterStartMonday);
     }
   } catch (e) {
     console.warn("[PotatoPlus bg] 获取学期起始日期失败:", e);

@@ -319,10 +319,10 @@
 .pp-sched-dh.today{color:#5b6abf;font-weight:600}
 .pp-sched-dd{font-size:10px;color:#bbb;margin-top:1px}
 .pp-sched-dh.today .pp-sched-dd{color:#7b8ad0}
-.pp-sched-tl{display:flex;flex-direction:column;align-items:center;justify-content:center;height:${SLOT_H}px;border-right:1px solid #f5f5f5;box-sizing:border-box}
+.pp-sched-tl{grid-column:1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:${SLOT_H}px;border-right:1px solid #f5f5f5;box-sizing:border-box}
 .pp-sched-tn{font-size:13px;font-weight:500;color:#aaa}
 .pp-sched-tr{font-size:8px;color:#ccc;margin-top:1px}
-.pp-sched-row{display:grid;grid-template-columns:repeat(7,1fr);height:${SLOT_H}px;border-bottom:1px solid #f8f8f8}
+.pp-sched-row{grid-column:2/-1;display:grid;grid-template-columns:repeat(7,1fr);height:${SLOT_H}px;border-bottom:1px solid #f8f8f8}
 .pp-sched-cell{border-right:1px solid #f8f8f8}
 .pp-sched-layer{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none}
 .pp-sched-course{position:absolute;border-radius:7px;padding:3px 5px;overflow:hidden;cursor:default;font-size:11px;line-height:1.3;color:#fff;transition:box-shadow .15s,transform .15s;z-index:1;box-sizing:border-box;pointer-events:auto}
