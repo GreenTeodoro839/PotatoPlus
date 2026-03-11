@@ -266,7 +266,7 @@ function initXKWelcome(getBulletin) {
 
   const welcome_html = `
     <div class="pjw-xk-welcome-card">
-      <p id="pjw-bulletin-content" style="font-size: 14px;">${pjw.data.bulletin_content || ""}</p>
+      <div id="pjw-bulletin-content" style="font-size: 14px;">${pjw.data.bulletin_content || ""}</div>
       <div class="pjw-xk-welcome-link-container">
         <a href="https://potatoplus.zcec.top/potatoplus" target="_blank" style="font-weight: bold;">PotatoPlus ${pjw.version}</a>
         <a href="https://github.com/GreenTeodoro839/PotatoPlus" target="_blank">GitHub</a>
