@@ -70,7 +70,7 @@ async function handleScheduleFetch(msg) {
   // 5. 获取学期起始日期
   var semesterStartMonday = null;
   try {
-    var semResp = await fetch("https://potatoplus.zcec.top/potatoplus-schedule/semester.json");
+    var semResp = await fetch("https://potatoplus.zcec.top/apps/potatoplus-schedule/semester.json");
     console.log("[PotatoPlus bg] semester.json status:", semResp.status);
     if (semResp.ok) {
       var semData = await semResp.json();
