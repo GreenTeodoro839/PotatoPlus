@@ -7,7 +7,8 @@ NJU 土豆改善工程 — 南京大学教务系统浏览器扩展
 - **统一身份认证验证码自动识别** — authserver.nju.edu.cn 登录页验证码自动填写
 - **选课平台美化** — xk.nju.edu.cn 课程列表增强、筛选、收藏
 - **选课平台验证码识别** — xk.nju.edu.cn 登录验证码自动点选
-- **GPA 计算器** — 成绩页面内置学分绩计算
+- **GPA 计算器** — 成绩页面内置学分绩计算，页面加载后自动弹出面板
+- **课表弹窗** — ehall 首页右上角一键查看周课表，支持教学周、缓存、重叠课程悬浮详情
 - **自动评教** — 一键五星好评
 
 ## 安装
@@ -43,11 +44,25 @@ js/
 ├── xk/                # 选课系统 xk.nju.edu.cn
 │   ├── welcome.js     # 登录页 + 验证码识别
 │   └── course.js      # 选课列表增强
-└── jiaowu/            # 教务系统
-    ├── init.js        # 教务页面通用初始化
-    ├── grade.js       # GPA 计算器
-    └── eval.js        # 自动评教
+├── ehall/             # ehall / jwapp 页面增强
+│   ├── home.js        # ehall 首页卡片与入口
+│   ├── schedule.js    # 课表弹窗
+│   ├── schedule-bridge.js # 页面脚本与扩展消息桥接
+│   ├── grade.js       # 成绩页 GPA 计算器
+│   └── eval.js        # 自动评教
+├── jiaowu/            # 旧教务系统
+│   └── init.js        # 教务页面通用初始化
+└── background.js      # Service Worker，请求课表 API / 登录态判断
 ```
+
+## 说明
+
+### 课表弹窗
+- 入口：ehall 首页左侧卡片右上角「📅 课表」
+- 数据来源：ehall / jwapp 课表接口
+- 教学周：从服务端 `semester.json` 获取学期起始日期计算
+- 缓存：保存在 `localStorage`，有效期一周；有缓存时可直接查看
+- 登录检查：无缓存或手动刷新时，会检查 ehall 登录状态，未登录则提示先登录
 
 ## 开发
 
