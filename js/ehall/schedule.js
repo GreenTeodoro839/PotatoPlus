@@ -223,7 +223,7 @@
 
     for(var s=0;s<TIMES.length;s++){
       var tl=document.createElement("div");tl.className="pp-sched-tl";
-      tl.innerHTML='<div class="pp-sched-tn">'+(s+1)+'</div><div class="pp-sched-tr">'+TIMES[s][0]+'</div>';
+      tl.innerHTML='<div class="pp-sched-tn">'+(s+1)+'</div><div class="pp-sched-tr">'+TIMES[s][0]+'</div><div class="pp-sched-tr">'+TIMES[s][1]+'</div>';
       grid.appendChild(tl);
       var row=document.createElement("div");row.className="pp-sched-row";
       for(var c=0;c<7;c++){var cell=document.createElement("div");cell.className="pp-sched-cell";row.appendChild(cell);}
