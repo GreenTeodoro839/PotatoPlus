@@ -253,7 +253,7 @@
       </div>
       <div class="pp-welcome-line bulletin">
         <span class="pp-icon">📡</span>
-        <span id="pp-home-bulletin">${(window.pjw && pjw.data && pjw.data.bulletin_content) || ""}</span>
+        <div id="pp-home-bulletin">${(window.pjw && pjw.data && pjw.data.bulletin_content) || ""}</div>
       </div>
       <div class="pp-welcome-spacer"></div>
       <div class="pp-welcome-links">
