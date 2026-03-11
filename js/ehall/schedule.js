@@ -236,7 +236,7 @@
 
     // --- 重叠处理 ---
     // 分组：同天时间有交叉的课归为一组
-    function courseKey(c){return c.weekTime+"-"+c.startTime+"-"+c.endTime+"-"+c.name;}
+    function courseKey(c){return c.weekTime+"-"+c.startTime+"-"+c.endTime+"-"+c.name+"-"+c.teacher+"-"+(c.weeks?c.weeks.join(","):"");}
 
     var sorted=data.courses.filter(function(c){return c.weekTime>=1&&c.weekTime<=7&&c.startTime>=1;});
     sorted.sort(function(a,b){return a.weekTime===b.weekTime?a.startTime-b.startTime:a.weekTime-b.weekTime;});
