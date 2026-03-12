@@ -895,17 +895,23 @@
         background: ${BG_LIGHT} !important;
         font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif !important;
         color: ${TEXT_MAIN} !important;
+        height: 100% !important;
       }
 
-      /* 欢迎横幅 */
+      /* 欢迎横幅，绝对定位居中 */
       .welcome, .welcome-box, #welcome,
       .banner, .index-banner {
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
         background: ${GRAD} !important;
         border-radius: ${RADIUS} !important;
-        padding: 24px 28px !important;
+        padding: 30px 40px !important;
         color: #fff !important;
-        margin: 16px !important;
-        box-shadow: ${SHADOW} !important;
+        margin: 0 !important;
+        box-shadow: ${SHADOW}, 0 4px 20px rgba(100,120,200,.2) !important;
+        min-width: 400px !important;
       }
       .welcome *, .welcome-box *, #welcome * {
         color: #fff !important;
@@ -914,6 +920,16 @@
         font-size: 20px !important;
         font-weight: 700 !important;
         margin: 0 0 6px !important;
+      }
+      .welcome ul {
+        list-style: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .welcome li {
+        margin-bottom: 8px !important;
+        font-size: 14px !important;
+        line-height: 1.5 !important;
       }
 
       /* 公告/信息卡片 */
