@@ -611,9 +611,9 @@
       .listBox tr:hover {
         background: rgba(106,127,200,.08) !important;
       }
-      /* 不要让表头 hover 变色 */
-      .listBox tr:first-child:hover {
-        background: transparent !important;
+      .listBox table tr:first-child,
+      .listBox table tr:first-child * {
+        pointer-events: none !important;
       }
 
       /* 单元格 */
