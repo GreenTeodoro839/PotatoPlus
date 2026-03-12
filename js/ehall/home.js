@@ -340,19 +340,39 @@
     return true;
   }
 
-  // SPA：用 MutationObserver 等待 DOM 就绪
-  if (inject()) return;
+  // SPA：用 MutationObserver 等待 DOM 就绪（首次注入）
+  if (!inject()) {
+    var observer = new MutationObserver(function () {
+      if (inject()) {
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.documentElement, { childList: true, subtree: true });
 
-  var observer = new MutationObserver(function () {
-    if (inject()) {
+    // 超时兜底
+    setTimeout(function () {
       observer.disconnect();
+      inject();
+    }, 15000);
+  }
+
+  // SPA 路由切换监听：切回 #/hall 时重新注入
+  window.addEventListener("hashchange", function () {
+    var hash = location.hash;
+    if (hash === "#/hall" || hash === "#/" || hash === "" || hash === "#") {
+      if (hash !== "#/hall") {
+        location.hash = "#/hall";
+        return;
+      }
+      setTimeout(function () {
+        if (!document.getElementById("pp-home-container")) {
+          var retryObserver = new MutationObserver(function () {
+            if (inject()) retryObserver.disconnect();
+          });
+          retryObserver.observe(document.documentElement, { childList: true, subtree: true });
+          setTimeout(function () { retryObserver.disconnect(); inject(); }, 5000);
+        }
+      }, 100);
     }
   });
-  observer.observe(document.documentElement, { childList: true, subtree: true });
-
-  // 超时兜底
-  setTimeout(function () {
-    observer.disconnect();
-    inject();
-  }, 15000);
 })();
