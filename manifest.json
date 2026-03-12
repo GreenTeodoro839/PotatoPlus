@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "PotatoPlus",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Potato Overflow! NJU土豆改善工程",
   "icons": {
     "96": "img/logo96.png",
@@ -12,48 +12,92 @@
   "author": "Limos",
   "content_scripts": [
     {
-      "matches": ["*://*.nju.edu.cn/jiaowu*", "*://xk.nju.edu.cn/*"],
-      "css": ["css/material-components-web.min.css", "css/pjw.css", "css/pjw-classlist.css", "css/pjw-filter.css", "css/pjw-console.css"],
-      "js": ["js/inject.js"],
+      "matches": [
+        "*://*.nju.edu.cn/jiaowu*",
+        "*://xk.nju.edu.cn/*"
+      ],
+      "css": [
+        "css/material-components-web.min.css",
+        "css/pjw.css",
+        "css/pjw-classlist.css",
+        "css/pjw-filter.css",
+        "css/pjw-console.css"
+      ],
+      "js": [
+        "js/inject.js"
+      ],
       "run_at": "document_start",
       "all_frames": true
     },
     {
-      "matches": ["*://authserver.nju.edu.cn/*"],
-      "js": ["js/inject.js"],
+      "matches": [
+        "*://authserver.nju.edu.cn/*"
+      ],
+      "js": [
+        "js/inject.js"
+      ],
       "run_at": "document_start",
       "all_frames": true
     },
     {
-      "matches": ["*://ehallapp.nju.edu.cn/jwapp/sys/wspjyyapp/*"],
-      "js": ["js/inject.js"],
+      "matches": [
+        "*://ehallapp.nju.edu.cn/jwapp/sys/wspjyyapp/*"
+      ],
+      "js": [
+        "js/inject.js"
+      ],
       "run_at": "document_start",
       "all_frames": true
     },
     {
-      "matches": ["*://ehallapp.nju.edu.cn/jwapp/sys/cjcx/*"],
-      "js": ["js/inject.js"],
+      "matches": [
+        "*://ehallapp.nju.edu.cn/jwapp/sys/cjcx/*"
+      ],
+      "js": [
+        "js/inject.js"
+      ],
       "run_at": "document_start",
       "all_frames": true
     },
     {
-      "matches": ["*://ehall.nju.edu.cn/ywtb-portal/*"],
-      "js": ["js/inject.js", "js/ehall/schedule-bridge.js"],
+      "matches": [
+        "*://ehall.nju.edu.cn/ywtb-portal/*"
+      ],
+      "js": [
+        "js/inject.js",
+        "js/ehall/schedule-bridge.js"
+      ],
       "run_at": "document_start",
       "all_frames": true
     },
     {
-      "matches": ["*://ams.nju.edu.cn/*"],
-      "css": ["css/ams-global.css"],
-      "js": ["js/inject.js"],
+      "matches": [
+        "*://ams.nju.edu.cn/*"
+      ],
+      "css": [
+        "css/ams-global.css"
+      ],
+      "js": [
+        "js/inject.js"
+      ],
       "run_at": "document_start",
       "all_frames": true
     }
   ],
-  "web_accessible_resources": [{
-    "resources": ["js/*","css/*","fonts/*"],
-    "matches": ["*://*.nju.edu.cn/*", "*://ehallapp.nju.edu.cn/*", "*://ams.nju.edu.cn/*"]
-  }],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "js/*",
+        "css/*",
+        "fonts/*"
+      ],
+      "matches": [
+        "*://*.nju.edu.cn/*",
+        "*://ehallapp.nju.edu.cn/*",
+        "*://ams.nju.edu.cn/*"
+      ]
+    }
+  ],
   "permissions": [
     "nativeMessaging"
   ],
