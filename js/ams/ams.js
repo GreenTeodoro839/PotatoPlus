@@ -698,9 +698,9 @@
     `);
 
   // ============================================================
-  // 5. 作业详情/作答页  tc_questions/view_and_answer_homework.htm
+  // 5. 作业详情/作答页  tc_questions/view_and_answer_homework.htm & view_homework.htm
   // ============================================================
-  } else if (/view_and_answer_homework\.htm/.test(url)) {
+  } else if (/view_homework\.htm|view_and_answer_homework\.htm/.test(url)) {
     injectCSS(`
       /* AMS 作业详情/作答页美化 */
       html, body {
