@@ -10,6 +10,7 @@ NJU 土豆改善工程 — 南京大学教务系统浏览器扩展
 - **GPA 计算器** — 成绩页面内置学分绩计算，页面加载后自动弹出面板
 - **课表弹窗** — ehall 首页右上角一键查看周课表，支持教学周、缓存、重叠课程悬浮详情
 - **自动评教** — 一键五星好评
+- **AMS作业提交平台美化** — 给复古的 ams.nju.edu.cn 做个现代化的UI
 
 ## 安装
 
@@ -74,4 +75,5 @@ GPL-3.0 — 详见 [LICENSE](LICENSE)
 
 ## Credits
 
-By [Limos](https://potatoplus.zcec.top/about)
+By [小猪](https://potatoplus.zcec.top/about)
+原作者 [cubiccm](https://github.com/cubiccm)
