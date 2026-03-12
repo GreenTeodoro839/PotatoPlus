@@ -886,7 +886,112 @@
     `);
 
   // ============================================================
-  // 6. 主页欢迎页  admin-right.jsp
+  // 6. 个人中心页  eclp_user/view_eclp_user.htm
+  // ============================================================
+  } else if (/view_eclp_user\.htm/.test(url)) {
+    injectCSS(`
+      html, body {
+        background: ${BG_LIGHT} !important;
+        font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif !important;
+        color: ${TEXT_MAIN} !important;
+      }
+
+      .main {
+        background: transparent !important;
+        padding: 22px 26px !important;
+      }
+
+      .formBox {
+        background: ${BG_WHITE} !important;
+        border: 1px solid ${BORDER} !important;
+        border-radius: 18px !important;
+        box-shadow: ${SHADOW} !important;
+        overflow: hidden !important;
+      }
+
+      .formBox > h5 {
+        margin: 0 !important;
+        padding: 16px 20px !important;
+        background: ${GRAD} !important;
+        color: #fff !important;
+        border: none !important;
+        font-size: 15px !important;
+      }
+      .formBox > h5 span,
+      .formBox > h5 i {
+        color: #fff !important;
+        background: none !important;
+      }
+
+      .formBox .content {
+        padding: 18px 18px 10px !important;
+      }
+
+      table.c2.w,
+      .formBox table {
+        width: 100% !important;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        background: ${BG_WHITE} !important;
+      }
+      .formBox td,
+      .formBox th {
+        border: none !important;
+        border-bottom: 1px solid ${BORDER} !important;
+        padding: 14px 16px !important;
+        font-size: 13px !important;
+        color: ${TEXT_MAIN} !important;
+      }
+      .formBox tr:nth-child(odd) td,
+      .formBox tr:nth-child(odd) th {
+        background: #fafbfe !important;
+      }
+      .formBox th.tr {
+        width: 110px !important;
+        text-align: right !important;
+        color: #5f6f89 !important;
+        font-weight: 600 !important;
+      }
+
+      .formBox input[type="email"],
+      .formBox input[type="text"],
+      .formBox input[type="password"] {
+        border: 1px solid #d7deea !important;
+        border-radius: 10px !important;
+        padding: 8px 12px !important;
+        background: #fff !important;
+        box-shadow: none !important;
+      }
+      .formBox input:focus {
+        outline: none !important;
+        border-color: ${ACCENT} !important;
+        box-shadow: 0 0 0 3px rgba(106,127,200,.14) !important;
+      }
+
+      .form-but {
+        text-align: center !important;
+        padding: 18px 0 4px !important;
+      }
+      .form-but .button-s4,
+      .form-but button {
+        display: inline-block !important;
+        background: ${GRAD_SOLID} !important;
+        background-image: ${GRAD_SOLID} !important;
+        color: #fff !important;
+        border: none !important;
+        border-radius: 999px !important;
+        padding: 9px 20px !important;
+        min-width: 96px !important;
+        font-size: 13px !important;
+        line-height: 1.2 !important;
+        text-align: center !important;
+        box-shadow: 0 6px 16px rgba(106,127,200,.28) !important;
+        margin: 0 10px !important;
+      }
+    `);
+
+  // ============================================================
+  // 7. 主页欢迎页  admin-right.jsp
   // ============================================================
   } else if (/admin-right\.jsp/.test(url)) {
     injectCSS(`
