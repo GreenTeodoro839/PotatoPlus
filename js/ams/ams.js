@@ -895,6 +895,13 @@
         background: ${BG_LIGHT} !important;
         font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif !important;
         color: ${TEXT_MAIN} !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 100vh !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        overflow: hidden !important;
       }
 
       /* 欢迎横幅 */
@@ -902,43 +909,39 @@
       .banner, .index-banner {
         background: ${GRAD} !important;
         border-radius: ${RADIUS} !important;
-        padding: 24px 28px !important;
+        padding: 40px 50px !important;
         color: #fff !important;
-        margin: 16px !important;
-        box-shadow: ${SHADOW} !important;
+        box-shadow: ${SHADOW}, 0 10px 30px rgba(100,120,200,.2) !important;
+        max-width: 600px !important;
+        width: 100% !important;
+        background-image: ${GRAD_SOLID} !important;
+        border: none !important;
       }
-      .welcome *, .welcome-box *, #welcome * {
+      .welcome ul {
+        list-style: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .welcome li {
+        margin-bottom: 12px !important;
+        font-size: 15px !important;
+        color: rgba(255,255,255,.9) !important;
+        line-height: 1.5 !important;
+      }
+      .welcome li:first-child {
+        font-size: 22px !important;
+        font-weight: bold !important;
+        margin-bottom: 24px !important;
         color: #fff !important;
       }
-      .welcome h2, .welcome h3, #welcome h2 {
-        font-size: 20px !important;
-        font-weight: 700 !important;
-        margin: 0 0 6px !important;
+      .welcome strong, .welcome span {
+        color: #fff !important;
+        font-weight: 600 !important;
       }
-
-      /* 公告/信息卡片 */
-      .notice-box, .info-card, .card {
-        background: ${BG_WHITE} !important;
-        border-radius: ${RADIUS} !important;
-        box-shadow: ${SHADOW} !important;
-        padding: 16px 20px !important;
-        margin: 0 16px 14px !important;
-        border: 1px solid ${BORDER} !important;
-      }
-      .notice-box h4, .info-card h4 {
-        color: ${ACCENT} !important;
-        font-size: 14px !important;
-        margin: 0 0 10px !important;
-      }
-
-      /* 链接 */
-      body a {
-        color: ${ACCENT} !important;
-        text-decoration: none !important;
-      }
-      body a:hover {
-        color: ${ACCENT_DARK} !important;
-        text-decoration: underline !important;
+      
+      /* 清除原始背景图(如那个带环的图案) */
+      .welcome {
+        background-image: ${GRAD} !important;
       }
     `);
   }
