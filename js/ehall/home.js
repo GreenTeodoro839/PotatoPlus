@@ -16,22 +16,23 @@
   var APP_EVAL  = EHALL_BASE + "5856333445645704";   // 本-网上评教
   var APP_XK    = "https://xk.nju.edu.cn/";          // 选课
 
+  var APP_COURSES = EHALL_BASE + "4766960573884517"; // 查询全部课程
+
   var CSS = `
+    /* ===== 容器：纵向堆叠，全宽 ===== */
     .pp-home-container {
       display: flex;
-      gap: 16px;
+      flex-direction: column;
+      gap: 14px;
       margin: 20px auto;
       max-width: 1200px;
       padding: 0 24px;
     }
     @media (max-width: 768px) {
-      .pp-home-container {
-        flex-direction: column;
-        padding: 0 12px;
-      }
+      .pp-home-container { padding: 0 12px; }
     }
 
-    /* 菜单卡片 — 紫蓝渐变 + 磨砂 */
+    /* ===== 功能卡片 — 紫蓝渐变 + 磨砂 ===== */
     .pp-menu-card {
       background: linear-gradient(-70deg, rgba(154, 110, 179, .85), rgba(67, 126, 202, .85));
       backdrop-filter: blur(16px);
@@ -39,54 +40,92 @@
       border-radius: 24px;
       padding: 22px 28px;
       color: rgba(255,255,255,.9);
-      flex: 1;
-      min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    /* 上半：日期 + 学期/教学周 左边，课表按钮右边 */
+    .pp-menu-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 18px;
     }
     .pp-menu-date {
       font-size: 22px;
       font-weight: bold;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
+    }
+    .pp-menu-semester {
+      font-size: 14px;
+      color: rgba(255,255,255,.7);
+      margin-right: 8px;
     }
     .pp-menu-week {
       font-size: 16px;
       color: rgba(255,255,255,.8);
-      margin-bottom: 18px;
     }
+    .pp-menu-sub {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    /* 下半：按钮横排 */
     .pp-menu-buttons {
       display: flex;
-      flex-direction: column;
+      flex-wrap: wrap;
       gap: 10px;
     }
     .pp-menu-btn {
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       border-radius: 14px;
-      padding: 11px 18px;
-      font-size: 15px;
+      padding: 10px 20px;
+      font-size: 14px;
       color: white;
       border: none;
       cursor: pointer;
       font-family: inherit;
       text-decoration: none;
       transition: all .2s ease;
-      background: rgba(255,255,255,.2);
+      background: rgba(255,255,255,.18);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
     }
     .pp-menu-btn:hover {
-      background: rgba(255,255,255,.35);
+      background: rgba(255,255,255,.32);
       color: white;
       text-decoration: none;
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(0,0,0,.15);
     }
     .pp-menu-btn-icon {
-      font-size: 20px;
+      font-size: 18px;
       flex-shrink: 0;
     }
 
-    /* 欢迎卡片 — 深灰蓝 + 磨砂 */
+    /* 课表按钮 */
+    .pp-sched-open {
+      background: rgba(255,255,255,.18);
+      border: none;
+      color: rgba(255,255,255,.9);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 8px 16px;
+      border-radius: 12px;
+      transition: all .15s;
+      white-space: nowrap;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .pp-sched-open:hover {
+      background: rgba(255,255,255,.32);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    /* ===== 信息卡片 — 深灰蓝 + 磨砂 ===== */
     .pp-welcome-card {
       background: rgba(75, 94, 123, .85);
       backdrop-filter: blur(16px);
@@ -94,8 +133,8 @@
       border-radius: 24px;
       padding: 22px 28px;
       color: rgba(255,255,255,.82);
-      flex: 1;
-      min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
       display: flex;
       flex-direction: column;
     }
@@ -130,29 +169,8 @@
       margin: 0 5px;
       transition: color .15s;
     }
-    .pp-welcome-links a:first-child {
-      margin-left: 0;
-    }
-    .pp-welcome-links a:hover {
-      color: white;
-    }
-
-    /* 课表按钮 */
-    .pp-sched-open {
-      background: none;
-      border: none;
-      color: rgba(255,255,255,.8);
-      cursor: pointer;
-      font-size: 14px;
-      padding: 4px 10px;
-      border-radius: 8px;
-      transition: all .15s;
-      white-space: nowrap;
-    }
-    .pp-sched-open:hover {
-      background: rgba(255,255,255,.2);
-      color: #fff;
-    }
+    .pp-welcome-links a:first-child { margin-left: 0; }
+    .pp-welcome-links a:hover { color: white; }
   `;
 
   function injectCSS() {
@@ -167,6 +185,17 @@
     var d = new Date();
     var days = ["日", "一", "二", "三", "四", "五", "六"];
     return (d.getMonth() + 1) + "月" + d.getDate() + "日 星期" + days[d.getDay()];
+  }
+
+  function getSemesterName() {
+    // 从缓存获取学期名
+    try {
+      var cache = JSON.parse(localStorage.getItem("potatoplus_schedule_cache"));
+      if (cache && cache.termName) return cache.termName;
+    } catch (e) {}
+    // fallback：按月份推断
+    var month = new Date().getMonth() + 1;
+    return (month >= 2 && month <= 7) ? "春季学期" : "秋季学期";
   }
 
   function getWeekString() {
@@ -210,6 +239,10 @@
         var el = document.querySelector(".pp-menu-week");
         if (el) el.textContent = formatWeek(resp.semesterStartMonday);
       }
+      if (resp.termName) {
+        var semEl = document.querySelector(".pp-menu-semester");
+        if (semEl) semEl.textContent = resp.termName;
+      }
     }
     window.addEventListener("message", handler);
     window.postMessage({type: "pp-schedule-request", reqId: reqId, force: false}, "*");
@@ -220,15 +253,20 @@
     container.className = "pp-home-container";
     container.id = "pp-home-container";
 
-    // --- 菜单卡片 ---
+    // --- 功能卡片（上）：日期 + 学期/教学周 + 横排按钮 ---
     var menu = document.createElement("div");
     menu.className = "pp-menu-card";
     menu.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <div class="pp-menu-date">${getDateString()}</div>
+      <div class="pp-menu-header">
+        <div>
+          <div class="pp-menu-date">${getDateString()}</div>
+          <div class="pp-menu-sub">
+            <span class="pp-menu-semester">${getSemesterName()}</span>
+            <span class="pp-menu-week">${getWeekString()}</span>
+          </div>
+        </div>
         <button class="pp-sched-open" id="pp-schedule-btn" title="查看课表">📅 课表</button>
       </div>
-      <div class="pp-menu-week">${getWeekString()}</div>
       <div class="pp-menu-buttons">
         <a class="pp-menu-btn" href="${APP_GRADE}" target="_blank">
           <span class="pp-menu-btn-icon">📊</span>
@@ -242,10 +280,14 @@
           <span class="pp-menu-btn-icon">📝</span>
           一键评教
         </a>
+        <a class="pp-menu-btn" href="${APP_COURSES}" target="_blank">
+          <span class="pp-menu-btn-icon">🔍</span>
+          查询全部课程
+        </a>
       </div>
     `;
 
-    // --- 欢迎卡片 ---
+    // --- 信息卡片（下）---
     var welcome = document.createElement("div");
     welcome.className = "pp-welcome-card";
 
