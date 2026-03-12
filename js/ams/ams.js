@@ -37,61 +37,6 @@
   }
 
   // ============================================================
-  // 全局遮罩层 & 加载进度条美化 (divprogressbar)
-  // ============================================================
-  injectCSS(`
-    /* 隐藏老式的进度条内部表格与 marquee */
-    #divprogressbar > div > table {
-      display: none !important;
-    }
-    
-    /* 重新绘制一个居中的现代 Loading */
-    #divprogressbar {
-      background: rgba(255,255,255,0.7) !important;
-      backdrop-filter: blur(4px) !important;
-      z-index: 9999 !important;
-      position: fixed !important;
-      left: 0 !important;
-      top: 0 !important;
-      width: 100% !important;
-      height: 100% !important;
-    }
-    #divprogressbar > div {
-      padding-top: 0 !important;
-      height: 100% !important;
-      display: flex !important;
-      flex-direction: column !important;
-      align-items: center !important;
-      justify-content: center !important;
-    }
-    
-    /* 用伪元素做个 Spinner */
-    #divprogressbar > div::before {
-      content: "" !important;
-      width: 40px !important;
-      height: 40px !important;
-      border: 3px solid rgba(106,127,200,.2) !important;
-      border-top-color: ${ACCENT} !important;
-      border-radius: 50% !important;
-      animation: pp-ams-spin 0.8s linear infinite !important;
-      margin-bottom: 16px !important;
-    }
-    
-    /* 提示文字 */
-    #divprogressbar > div::after {
-      content: "数据载入中..." !important;
-      color: ${TEXT_MAIN} !important;
-      font-size: 14px !important;
-      font-weight: 500 !important;
-      letter-spacing: 1px !important;
-    }
-    
-    @keyframes pp-ams-spin {
-      to { transform: rotate(360deg); }
-    }
-  `);
-
-  // ============================================================
   // 1. 顶栏  admin-top.jsp
   // ============================================================
   if (/admin-top\.jsp/.test(url)) {

@@ -44,6 +44,7 @@
     },
     {
       "matches": ["*://ams.nju.edu.cn/*"],
+      "css": ["css/ams-global.css"],
       "js": ["js/inject.js"],
       "run_at": "document_start",
       "all_frames": true
