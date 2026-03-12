@@ -28,22 +28,23 @@ NJU 土豆改善工程 — 南京大学教务系统浏览器扩展
 
 ```
 js/
-├── inject.js          # 入口，按页面按需加载脚本
-├── vendor/            # 第三方库
+├── inject.js          # 内容脚本入口，按站点/页面按需注入模块
+├── background.js      # 后台脚本（Manifest V3 service worker）
+├── vendor/            # 第三方依赖
 │   ├── jquery.min.js
 │   ├── material-components-web.min.js
 │   └── tinypinyin.js
-├── common/            # 共享模块
-│   ├── core.js        # pjw 全局对象、偏好存储
-│   ├── console.js     # 通知控制台
-│   ├── lib.js         # UI 组件库
+├── common/            # 通用模块
+│   ├── core.js        # 全局对象、偏好存储、基础工具
+│   ├── console.js     # 通知/控制台 UI
+│   ├── lib.js         # 通用 UI 组件库
 │   ├── crypto.js      # AES 加密（选课 API）
-│   ├── filter.js      # 课程筛选
+│   ├── filter.js      # 课程筛选逻辑
 │   └── classlist.js   # 课程列表组件
-├── authserver/        # 统一身份认证
-│   └── captcha.js     # 验证码识别
+├── authserver/        # 统一身份认证 authserver.nju.edu.cn
+│   └── captcha.js     # 登录验证码识别
 ├── xk/                # 选课系统 xk.nju.edu.cn
-│   ├── welcome.js     # 登录页 + 验证码识别
+│   ├── welcome.js     # 登录页增强 + 验证码识别
 │   └── course.js      # 选课列表增强
 ├── ehall/             # ehall / jwapp 页面增强
 │   ├── home.js        # ehall 首页卡片与入口
@@ -51,9 +52,10 @@ js/
 │   ├── schedule-bridge.js # 页面脚本与扩展消息桥接
 │   ├── grade.js       # 成绩页 GPA 计算器
 │   └── eval.js        # 自动评教
-├── jiaowu/            # 旧教务系统
-│   └── init.js        # 教务页面通用初始化
-└── background.js      # Service Worker，请求课表 API / 登录态判断
+├── ams/               # AMS 作业提交系统 ams.nju.edu.cn
+│   └── ams.js         # 顶栏/侧栏/列表/详情/欢迎页 UI 美化
+└── jiaowu/            # 旧教务系统
+    └── init.js        # 教务页面通用初始化
 ```
 
 ## 说明
