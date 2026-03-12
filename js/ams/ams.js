@@ -10,8 +10,8 @@
 
   var url = location.href;
 
-  // 排除 TinyMCE 编辑器页面，完全不动
-  if (/questions_center\.htm/.test(url)) return;
+  // 排除题目编辑页内部真正的编辑器 iframe（外层 questions_center 仍需美化底部按钮）
+  if (/questions_center\.htm/.test(url) && window.frameElement && window.frameElement.name === "answer_ifr") return;
 
   // ========== 统一色彩变量 ==========
   // 主渐变: 紫蓝
@@ -698,7 +698,44 @@
     `);
 
   // ============================================================
-  // 5. 作业详情/作答页  tc_questions/view_and_answer_homework.htm & view_homework.htm
+  // 5. 题目编辑页  tc_questions/questions_center.htm
+  // ============================================================
+  } else if (/questions_center\.htm/.test(url)) {
+    injectCSS(`
+      .form-but {
+        text-align: center !important;
+        padding: 18px 0 6px !important;
+        background: transparent !important;
+        border: none !important;
+      }
+      .form-but .button-s4,
+      .form-but button {
+        display: inline-block !important;
+        background: ${GRAD_SOLID} !important;
+        background-image: ${GRAD_SOLID} !important;
+        color: #fff !important;
+        border: none !important;
+        border-radius: 999px !important;
+        padding: 9px 20px !important;
+        min-width: 110px !important;
+        height: auto !important;
+        line-height: 1.2 !important;
+        font-size: 13px !important;
+        text-align: center !important;
+        box-shadow: 0 6px 16px rgba(106,127,200,.28) !important;
+        margin: 0 10px !important;
+      }
+      .form-but .button-s4:hover,
+      .form-but button:hover {
+        opacity: .92 !important;
+        background: ${GRAD_SOLID} !important;
+        background-image: ${GRAD_SOLID} !important;
+        color: #fff !important;
+      }
+    `);
+
+  // ============================================================
+  // 6. 作业详情/作答页  tc_questions/view_and_answer_homework.htm & view_homework.htm
   // ============================================================
   } else if (/view_homework\.htm|view_and_answer_homework\.htm/.test(url)) {
     injectCSS(`
