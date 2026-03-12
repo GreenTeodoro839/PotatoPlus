@@ -340,39 +340,25 @@
     return true;
   }
 
-  // SPA：用 MutationObserver 等待 DOM 就绪（首次注入）
-  if (!inject()) {
-    var observer = new MutationObserver(function () {
-      if (inject()) {
-        observer.disconnect();
-      }
-    });
-    observer.observe(document.documentElement, { childList: true, subtree: true });
-
-    // 超时兜底
-    setTimeout(function () {
-      observer.disconnect();
-      inject();
-    }, 15000);
-  }
-
-  // SPA 路由切换监听：切回 #/hall 时重新注入
-  window.addEventListener("hashchange", function () {
+  // 持久 MutationObserver：只要 #/hall 且卡片不存在就注入，永不 disconnect
+  // 解决 SPA 路由切换后 Vue 重绘导致卡片消失问题
+  var _injecting = false;
+  var persistObserver = new MutationObserver(function () {
+    if (_injecting) return;
     var hash = location.hash;
-    if (hash === "#/hall" || hash === "#/" || hash === "" || hash === "#") {
-      if (hash !== "#/hall") {
-        location.hash = "#/hall";
-        return;
-      }
-      setTimeout(function () {
-        if (!document.getElementById("pp-home-container")) {
-          var retryObserver = new MutationObserver(function () {
-            if (inject()) retryObserver.disconnect();
-          });
-          retryObserver.observe(document.documentElement, { childList: true, subtree: true });
-          setTimeout(function () { retryObserver.disconnect(); inject(); }, 5000);
-        }
-      }, 100);
-    }
+    if (hash !== "#/hall" && hash !== "#/" && hash !== "" && hash !== "#") return;
+    if (document.getElementById("pp-home-container")) return;
+    _injecting = true;
+    // 等 Vue 完成本次渲染再注入
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        inject();
+        _injecting = false;
+      });
+    });
   });
+  persistObserver.observe(document.documentElement, { childList: true, subtree: true });
+
+  // 首次注入尝试
+  inject();
 })();
