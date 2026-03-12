@@ -41,11 +41,17 @@
       "js": ["js/inject.js", "js/ehall/schedule-bridge.js"],
       "run_at": "document_start",
       "all_frames": true
+    },
+    {
+      "matches": ["*://ams.nju.edu.cn/*"],
+      "js": ["js/inject.js"],
+      "run_at": "document_start",
+      "all_frames": true
     }
   ],
   "web_accessible_resources": [{
     "resources": ["js/*","css/*","fonts/*"],
-    "matches": ["*://*.nju.edu.cn/*", "*://ehallapp.nju.edu.cn/*"]
+    "matches": ["*://*.nju.edu.cn/*", "*://ehallapp.nju.edu.cn/*", "*://ams.nju.edu.cn/*"]
   }],
   "permissions": [
     "nativeMessaging"
@@ -59,6 +65,7 @@
     "*://authserver.nju.edu.cn/*",
     "*://ehallapp.nju.edu.cn/*",
     "*://ehall.nju.edu.cn/*",
+    "*://ams.nju.edu.cn/*",
     "*://potatoplus.zcec.top/*"
   ],
   "browser_specific_settings": {

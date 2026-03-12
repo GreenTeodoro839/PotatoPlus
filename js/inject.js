@@ -41,6 +41,7 @@ var modes_reg = {
   ehall_eval: /ehallapp\.nju\.edu\.cn\/jwapp\/sys\/wspjyyapp/i,
   ehall_grade: /ehallapp\.nju\.edu\.cn\/jwapp\/sys\/cjcx/i,
   ehall_home: /ehall\.nju\.edu\.cn\/ywtb-portal\//i,
+  ams: /ams\.nju\.edu\.cn/i,
 };
 
 let pjw_mode = "";
@@ -115,6 +116,13 @@ if (pjw_mode == "ehall_eval") {
     "js/common/core.js",
     "js/ehall/schedule.js",
     "js/ehall/home.js",
+  ]);
+
+} else if (pjw_mode == "ams") {
+  // AMS 作业提交系统 UI 美化
+  injectScripts([
+    "js/common/core.js",
+    "js/ams/ams.js",
   ]);
 
 } else if (pjw_mode != "") {
