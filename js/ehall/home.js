@@ -309,10 +309,10 @@
   }
 
   function inject() {
-    // 实际 DOM: .hall > .body > .role-matter
+    // 实际 DOM: .hall > .body（未登录）或 .main > .body（已登录）
     // 在 .body 内、.role-matter 之前注入
-    var body = document.querySelector(".hall > .body");
-    var roleMatter = document.querySelector(".hall > .body > .role-matter");
+    var body = document.querySelector(".hall > .body") || document.querySelector(".main > .body");
+    var roleMatter = document.querySelector(".hall > .body > .role-matter") || document.querySelector(".main > .body > .role-matter");
     if (!body) return false;
 
     // 避免重复注入
