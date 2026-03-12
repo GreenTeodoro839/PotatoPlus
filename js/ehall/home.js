@@ -188,14 +188,11 @@
   }
 
   function getSemesterName() {
-    // 从缓存获取学期名
     try {
       var cache = JSON.parse(localStorage.getItem("potatoplus_schedule_cache"));
       if (cache && cache.termName) return cache.termName;
     } catch (e) {}
-    // fallback：按月份推断
-    var month = new Date().getMonth() + 1;
-    return (month >= 2 && month <= 7) ? "春季学期" : "秋季学期";
+    return "";
   }
 
   function getWeekString() {
