@@ -176,7 +176,8 @@ function() {
         order = 'isChoose -';
       }
     }
-    var queryStr = '{"data":' + queryData + ',"pageSize":"' + CVParams.pageSize * 1000 + '","pageNumber":"' + (page || CVParams.pageNumber) + '","order":"' + order + '"}';
+    var pageSz = (window.list && window.list.loadAllMode !== false) ? CVParams.pageSize * 1000 : CVParams.pageSize;
+    var queryStr = '{"data":' + queryData + ',"pageSize":"' + pageSz + '","pageNumber":"' + (page || CVParams.pageNumber) + '","order":"' + order + '"}';
     var queryParam = {
       'querySetting': queryStr
     };
@@ -278,9 +279,9 @@ function() {
   // Comprehensive style overrides for search-container redesign
   $("<style id='pjw-search-redesign'>").text([
     /* Remove white card — transparent background matching page */
-    ".search-container { background: transparent !important; box-shadow: none !important; border: none !important; border-radius: 0 !important; margin: 8px 3% 0 !important; padding: 6px 8px !important; display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; }",
+    ".search-container { background: transparent !important; box-shadow: none !important; border: none !important; border-radius: 0 !important; margin: 8px 3% 0 !important; padding: 6px 8px !important; display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; align-items: center !important; row-gap: 6px !important; }",
     /* Inner wrapper should also be a flex row */
-    ".search-container .cv-clearfix { display: flex !important; flex-direction: row !important; align-items: center !important; flex-wrap: nowrap !important; flex: 1 1 auto; min-width: 0; }",
+    ".search-container .cv-clearfix { display: flex !important; flex-direction: row !important; align-items: center !important; flex-wrap: wrap !important; flex: 1 1 auto; min-width: 0; row-gap: 6px; }",
     /* Hide the redundant "选择过滤:" label */
     ".search-container .search-item:first-child .search-label { display: none; }",
     /* Labels */
@@ -312,6 +313,7 @@ function() {
     ".jqx-window { border-radius: 16px !important; overflow: hidden !important; }",
     ".jqx-window-header { border-radius: 16px 16px 0 0 !important; }",
     ".cv-jxbdetail-btn { border-radius: 100px !important; padding: 6px 20px !important; }",
+    "#loadall-switch { border-radius: 24px !important; border-left: none !important; margin-left: 6px !important; }",
   ].join("\n")).appendTo("head");
   $("body").css("overflow-y", "auto");
   $(".cv-page-footer").hide();
@@ -551,6 +553,11 @@ function() {
       clearTimeout(this._loadPageTimer);
       this._loadPageTimer = null;
     }
+    if (this._paginatedAjax) {
+      this._paginatedAjax.abort();
+      this._paginatedAjax = null;
+    }
+    this._paginatedLoading = false;
     $(".content-container").css("height", "100%");
     $("body").css("overflow-y", "auto");
     var target_page = "";
@@ -567,6 +574,7 @@ function() {
       default:
         target_page = "publicCourse.do";
     }
+    this._paginatedTargetPage = target_page;
     return new Promise((resolve, reject) => {
       this.ajax_request = $.ajax({
         type: "POST",
@@ -577,11 +585,11 @@ function() {
         }
       }).done((data) => {
         this.ajax_request = null;
-        if (data.code != "1") { 
+        if (data.code != "1") {
           reject(data.msg);
           return;
         }
-        if (data.totalCount > 50) {
+        if (this.loadAllMode !== false && data.totalCount > 50) {
           let totalPages = parseInt((data.totalCount - 1) / 50);
           if (totalPages > 2) {
             this.console.info(`共需加载 ${data.totalCount} 门课程（${totalPages + 1} 页），可能需要较长时间。`);
@@ -624,16 +632,86 @@ function() {
           };
           loadPage(1);
         } else {
+          // Single page or paginated mode
+          this._paginatedPage = 0;
+          this._paginatedTotalPages = (this.loadAllMode === false && data.totalCount > CVParams.pageSize)
+            ? parseInt((data.totalCount - 1) / CVParams.pageSize) : 0;
+          this._paginatedLoading = false;
           this.parse(data.dataList);
           resolve();
         }
-        
+
       }).fail((jqXHR, textStatus) => {
         reject(`${textStatus} (${jqXHR.status})`);
       });
     });
   }
-  
+
+  // Load next page when scrolling in paginated mode
+  list.loadNextPage = function() {
+    if (this.loadAllMode !== false || this._paginatedLoading) return;
+    if (this._paginatedPage >= this._paginatedTotalPages) return;
+
+    this._paginatedLoading = true;
+    this._paginatedPage++;
+    var page = this._paginatedPage;
+    this.setStatus("正在加载更多...");
+
+    this._paginatedAjax = $.ajax({
+      type: "POST",
+      url: BaseUrl + "/sys/xsxkapp/elective/" + this._paginatedTargetPage,
+      data: getListParam(page),
+      headers: { "token": sessionStorage.token }
+    }).done((data) => {
+      this._paginatedAjax = null;
+      this._paginatedLoading = false;
+      if (data.code == "1" && data.dataList) {
+        // Append mode: skip intl() reset by keeping prepared_to_add true
+        this.prepared_to_add = true;
+        this.auto_inc = this.class_data.length;
+        this.soft_refresh = false;
+        this.parse(data.dataList);
+        this.setStatus(true);
+      }
+    }).fail(() => {
+      this._paginatedAjax = null;
+      this._paginatedLoading = false;
+      this.setStatus(true);
+    });
+  };
+
+  // Scroll handler for paginated loading
+  $$(window).on("scroll", null, { target: list }, (e) => {
+    var t = e.data.target;
+    if (t.loadAllMode === false && t._paginatedTotalPages > 0 && !t._paginatedLoading) {
+      if ($$(window).scrollTop() + $$(window).height() + 1800 >= $$(document).height()) {
+        t.loadNextPage();
+      }
+    }
+  });
+
+  // --- Load-all toggle (persisted via pjw.data) ---
+  list.loadAllMode = pjw.data.loadAllCourses !== false; // default true
+
+  var loadAllBtn = $$(`
+    <button class="mdc-button mdc-button--raised pjw-classlist-heading-button pjw-classlist-heading-switch-button ${list.loadAllMode ? "on" : "off"}" id="loadall-switch">
+      <div class="material-icons-round">${list.loadAllMode ? "toggle_on" : "toggle_off"}</div>
+      <div class="mdc-button__label pjw-classlist-heading-refresh-button__label" style="letter-spacing: 2px" data-off="逐页" data-on="全部">${list.loadAllMode ? "全部" : "逐页"}</div>
+    </button>
+  `);
+  $$("#autoreload-control-section").append(loadAllBtn);
+
+  // If paginated mode, disable search on init
+  if (!list.loadAllMode) {
+    list.search_input.prop("disabled", true);
+    $$("#pjw-classlist-search-field").addClass("mdc-text-field--disabled");
+  }
+
+  $$(document).on("click", "#loadall-switch", function() {
+    pjw.data.loadAllCourses = !list.loadAllMode;
+    location.reload();
+  });
+
   list.refresh();
 }
 
