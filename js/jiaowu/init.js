@@ -5,6 +5,7 @@ window.potatojw_intl = function() {
   if (pjw.initialized == true) return;
   pjw.initialized = true;
   
+  if (typeof jQuery === "undefined") return;
   if (jQuery.fn.jquery == "3.5.1")
     window.$$ = jQuery.noConflict();
   else

@@ -260,20 +260,59 @@ function() {
   }
 
   window.list = new PJWClassList($(".content-container"));
-  // $(".search-container").css("display", "none");
   $(".result-container").css("display", "none");
   $(".content-container").css("height", "100%");
-  $(".search-container").addClass("mdc-card");
-  $(".search-container").css({
-    "border-radius": "20px",
-    "margin": "10px 3%",
-    "flex-direction": "row",
-    "flex-wrap": "wrap",
-  });
-  $(".search-item").css({
-    "width": "fit-content",
-    "flex-shrink": "0",
-  });
+  // Move refresh controls into the filter row.
+  // The site rebuilds .search-container children on tab switch, so we use a
+  // MutationObserver to re-append our element whenever it gets removed.
+  var arSection = document.getElementById('autoreload-control-section');
+  var searchContainer = document.querySelector('.search-container');
+  if (arSection && searchContainer) {
+    searchContainer.appendChild(arSection);
+    new MutationObserver(() => {
+      if (!searchContainer.contains(arSection)) {
+        searchContainer.appendChild(arSection);
+      }
+    }).observe(searchContainer, { childList: true });
+  }
+  // Comprehensive style overrides for search-container redesign
+  $("<style id='pjw-search-redesign'>").text([
+    /* Remove white card — transparent background matching page */
+    ".search-container { background: transparent !important; box-shadow: none !important; border: none !important; border-radius: 0 !important; margin: 8px 3% 0 !important; padding: 6px 8px !important; display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; }",
+    /* Inner wrapper should also be a flex row */
+    ".search-container .cv-clearfix { display: flex !important; flex-direction: row !important; align-items: center !important; flex-wrap: nowrap !important; flex: 1 1 auto; min-width: 0; }",
+    /* Hide the redundant "选择过滤:" label */
+    ".search-container .search-item:first-child .search-label { display: none; }",
+    /* Labels */
+    ".search-container .search-label { font-size: 13px; color: rgba(0,0,0,.55); margin: 0 5px 0 10px; white-space: nowrap; line-height: 1.4; }",
+    /* Pill-style toggle buttons */
+    ".search-container .search-value { border-radius: 100px !important; padding: 5px 14px !important; font-size: 13px !important; font-weight: 500 !important; cursor: pointer; background: rgba(0,0,0,.07) !important; color: rgba(0,0,0,.7) !important; transition: all .15s ease-out; white-space: nowrap; margin: 0 3px !important; user-select: none; line-height: 1.4; float: none !important; }",
+    ".search-container .search-value.cv-active { background: linear-gradient(114deg, rgba(81,18,127,.9) 0%, rgba(215,10,132,.9) 100%) !important; color: white !important; }",
+    ".search-container .search-value:not(.cv-active):hover { background: rgba(0,0,0,.12) !important; }",
+    /* Pill-style dropdowns */
+    ".search-container .cv-search-dropdown { border-radius: 100px !important; padding: 5px 14px !important; font-size: 13px !important; border: 1.5px solid rgba(0,0,0,.15) !important; background: rgba(255,255,255,.7) !important; color: rgba(0,0,0,.7) !important; outline: none !important; width: auto !important; min-width: 110px; transition: all .15s ease-out !important; appearance: none !important; -webkit-appearance: none !important; }",
+    ".search-container .cv-search-dropdown:focus { border-color: rgba(81,18,127,.6) !important; }",
+    /* Filter item layout */
+    ".search-container .search-item { width: fit-content !important; flex-shrink: 0; }",
+    ".search-container .search-item-warp { display: flex; align-items: center; margin: 0 3px; }",
+    /* Refresh controls pushed to the right */
+    "#autoreload-control-section { margin-left: auto !important; flex-shrink: 0; display: flex !important; align-items: center; margin-right: 4px; }",
+    /* Heading: zero height + overflow visible so search box shows without creating a blank row */
+    ".pjw-classlist-heading { height: 0 !important; overflow: visible !important; display: flex !important; justify-content: flex-end !important; margin: 0 5% !important; width: 90% !important; position: relative; z-index: 10; }",
+    ".pjw-classlist-selectors { display: none !important; }",
+    ".pjw-classlist-controls { float: none !important; }",
+    ".pjw-classlist-controls > section { margin: 0 !important; }",
+    "#search-section .mdc-text-field { margin: 10px 16px 4px !important; }",
+    ".pjw-classlist-main { margin-top: 10px !important; }",
+    /* Push filter panel below the search box that overflows from the zero-height heading */
+    ".pjw-filter-panel { margin-top: 62px !important; }",
+    /* Rounded dropdown popups */
+    ".cv-dropdown-dialog { border-radius: 12px !important; overflow: hidden !important; }",
+    /* Rounded jqx detail dialog + buttons */
+    ".jqx-window { border-radius: 16px !important; overflow: hidden !important; }",
+    ".jqx-window-header { border-radius: 16px 16px 0 0 !important; }",
+    ".cv-jxbdetail-btn { border-radius: 100px !important; padding: 6px 20px !important; }",
+  ].join("\n")).appendTo("head");
   $("body").css("overflow-y", "auto");
   $(".cv-page-footer").hide();
 
