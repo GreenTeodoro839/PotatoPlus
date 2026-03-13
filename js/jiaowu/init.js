@@ -74,7 +74,7 @@ window.potatojw_intl = function() {
       $$("div#TopLink").html(`<span class="pjw-mini-button" onclick="window.open('https://potatoplus.zcec.top/potatoplus')">v${pjw.version}</span>`);
     }
   } else if (pjw.site == "xk") {
-    pjw.preferences.enabled && pjw.preferences.share_usage_data && $("head").append($(google_analytics_js));
+    pjw.isOn("enabled") && pjw.isOn("share_usage_data") && $("head").append($(google_analytics_js));
   }
 
   console.log(`PotatoPlus v${pjw.version} (${pjw.platform}) by Limos`);
@@ -222,8 +222,8 @@ window.potatojw_intl = function() {
     }
   } else if (pjw.mode == "course") {
     // xk/course.js handles this
-    $(".user-dropdown").prepend(`<div style="cursor: pointer; color: #4D87F2; line-height: 17px; margin-bottom: 20px;" onclick="window.pjw.switch();window.location.reload();">${pjw.preferences.enabled ? "禁用 PotatoPlus" : "启用 PotatoPlus (Beta)"}</div>`);
-    pjw.preferences.enabled && enterMode("course");
+    $(".user-dropdown").prepend(`<div style="cursor: pointer; color: #4D87F2; line-height: 17px; margin-bottom: 20px;" onclick="window.pjw.switch();window.location.reload();">${pjw.isOn("enabled") ? "禁用 PotatoPlus" : "启用 PotatoPlus (Beta)"}</div>`);
+    pjw.isOn("enabled") && enterMode("course");
   } else {
     return;
   }

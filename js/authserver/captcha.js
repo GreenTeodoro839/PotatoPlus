@@ -66,7 +66,7 @@ function initAuthserver() {
 
   // --- Switch logic ---
   const switchEl = document.getElementById("pjw-authserver-captcha-switch");
-  switchEl.checked = (pjw.preferences.authserver_solve_captcha === true);
+  switchEl.checked = pjw.isOn("authserver_solve_captcha");
 
   const urlInput = document.getElementById("pjw-authserver-captcha-url-input");
 
@@ -79,14 +79,8 @@ function initAuthserver() {
   }
 
   switchEl.addEventListener("change", function() {
-    if (switchEl.checked && pjw.data.authserver_captcha_solver_link === null) {
-      switchEl.checked = false;
-      pjw.preferences.authserver_solve_captcha = false;
-      openDialog();
-    } else {
-      pjw.preferences.authserver_solve_captcha = switchEl.checked;
-      if (switchEl.checked) initAuthserverCaptchaSolver();
-    }
+    pjw.preferences.authserver_solve_captcha = switchEl.checked;
+    if (switchEl.checked) initAuthserverCaptchaSolver();
   });
 
   document.getElementById("pjw-authserver-captcha-config").addEventListener("click", openDialog);
@@ -143,7 +137,7 @@ function initAuthserver() {
   let _solvingCaptcha = false;
 
   async function solveAuthserverCaptcha() {
-    if (!pjw.preferences.authserver_solve_captcha) return;
+    if (!pjw.isOn("authserver_solve_captcha")) return;
     const imgEl = document.querySelector(".login-main #captchaImg") || document.getElementById("captchaImg");
     if (!imgEl) return;
     if (_solvingCaptcha) return;
@@ -203,7 +197,7 @@ function initAuthserver() {
     let lastSolvedSrc = "";
 
     function onNewSrc(imgEl) {
-      if (!pjw.preferences.authserver_solve_captcha) return;
+      if (!pjw.isOn("authserver_solve_captcha")) return;
       const src = imgEl.getAttribute("src") || "";
       if (!src || src === lastSolvedSrc) return;
       lastSolvedSrc = src;
@@ -250,7 +244,7 @@ function initAuthserver() {
   }
 
   // Auto-start if preference is enabled
-  if (pjw.preferences.authserver_solve_captcha) initAuthserverCaptchaSolver();
+  if (pjw.isOn("authserver_solve_captcha")) initAuthserverCaptchaSolver();
   console.log("[PotatoPlus] initAuthserver() complete");
 }
 

@@ -103,7 +103,7 @@ function initXKWelcome(getBulletin) {
   $("div.language").before(pjw_options_html);
 
   const enable_switch = new window.mdc.switchControl.MDCSwitch(document.getElementById("pjw-enable-switch"));
-  enable_switch.selected = pjw.preferences.enabled === true;
+  enable_switch.selected = pjw.isOn("enabled");
   $("#pjw-enable-switch").on("click", () => {
     const target = $(".pjw-xk-welcome-subsection");
     if (pjw.switch()) target.show();
@@ -111,27 +111,17 @@ function initXKWelcome(getBulletin) {
   });
 
   const share_usage_data_switch = new window.mdc.switchControl.MDCSwitch(document.getElementById("pjw-share-usage-data-switch"));
-  share_usage_data_switch.selected = pjw.preferences.share_usage_data === null || pjw.preferences.share_usage_data === true;
-  if (!pjw.preferences.enabled)
+  share_usage_data_switch.selected = pjw.isOn("share_usage_data");
+  if (!pjw.isOn("enabled"))
     $(".pjw-xk-welcome-subsection").hide();
-  $("#pjw-share-usage-data-switch").on("click", () => { pjw.preferences.share_usage_data = !pjw.preferences.share_usage_data; });
+  $("#pjw-share-usage-data-switch").on("click", () => { pjw.toggle("share_usage_data"); });
 
   const solve_captcha_switch = new window.mdc.switchControl.MDCSwitch(document.getElementById("pjw-solve-captcha-switch"));
-  solve_captcha_switch.selected = (pjw.preferences.solve_captcha === true);
+  solve_captcha_switch.selected = pjw.isOn("solve_captcha");
 
   const captcha_config_dialog = new window.mdc.dialog.MDCDialog(document.getElementById("pjw-captcha-config-dialog"));
-  $("#pjw-solve-captcha-switch").on("click", null, {
-    dialog: captcha_config_dialog,
-    switch: solve_captcha_switch
-  }, (e) => {
-    if (pjw.data.captcha_solver_link === null) {
-      e.data.switch.selected = false;
-      pjw.preferences.solve_captcha = false;
-      e.data.dialog.open();
-    } else {
-      pjw.preferences.solve_captcha = !pjw.preferences.solve_captcha;
-      initCAPTCHASolver();
-    }
+  $("#pjw-solve-captcha-switch").on("click", () => {
+    if (pjw.toggle("solve_captcha")) initCAPTCHASolver();
   });
   $("#pjw-captcha-config").on("click", null, {
     dialog: captcha_config_dialog
@@ -189,7 +179,7 @@ function initXKWelcome(getBulletin) {
   let _solvingCaptcha = false;
 
   async function solveXKCAPTCHA() {
-    if (!pjw.preferences.solve_captcha || $("#loginDiv").css("display") === "none") return;
+    if (!pjw.isOn("solve_captcha") || $("#loginDiv").css("display") === "none") return;
     const imgEl = document.getElementById("vcodeImg");
     if (!imgEl || !imgEl.complete || imgEl.naturalWidth === 0) return;
     if (_solvingCaptcha) return;
@@ -262,7 +252,7 @@ function initXKWelcome(getBulletin) {
     pjw.captcha_initialized = true;
   }
 
-  pjw.preferences.enabled && pjw.preferences.solve_captcha && initCAPTCHASolver();
+  pjw.isOn("enabled") && pjw.isOn("solve_captcha") && initCAPTCHASolver();
 
   const welcome_html = `
     <div class="pjw-xk-welcome-card">
@@ -280,7 +270,7 @@ function initXKWelcome(getBulletin) {
   `;
 
   $("div.language").before(welcome_html);
-  if (!pjw.preferences.enabled)
+  if (!pjw.isOn("enabled"))
     $(".pjw-xk-welcome-card").hide();
 
   getBulletin();

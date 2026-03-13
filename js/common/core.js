@@ -37,18 +37,19 @@ const pjw = {
     }
   }),
   preferences: {},
+  // Check if a default-on preference is currently on (null → true)
+  isOn: function(key) { return pjw.preferences[key] !== false; },
+  // Toggle a default-on preference, returns the new state
+  toggle: function(key) {
+    const next = !pjw.isOn(key);
+    pjw.preferences[key] = next;
+    return next;
+  },
   switch: function() {
-    if (pjw.preferences.enabled) {
-      pjw.preferences.enabled = false;
-      $(".pjw-xk-welcome-card")?.hide();
-      return false;
-    } else {
-      pjw.preferences.enabled = true;
-      if (pjw.preferences.share_usage_data === null)
-        pjw.preferences.share_usage_data = true;
-      $(".pjw-xk-welcome-card")?.show();
-      return true;
-    }
+    const on = pjw.toggle("enabled");
+    if (on) $(".pjw-xk-welcome-card")?.show();
+    else    $(".pjw-xk-welcome-card")?.hide();
+    return on;
   },
 };
 
