@@ -827,6 +827,7 @@
       /* 操作链接/按钮 */
       .operations a, td.operations a,
       a[href*="answer"], a[onclick*="answer"],
+      a[onclick*="operation"],
       a.btn-answer, .op-btns a {
         display: inline-block !important;
         background: ${GRAD_SOLID} !important;
@@ -840,7 +841,7 @@
         box-shadow: 0 2px 8px rgba(106,127,200,.25) !important;
       }
       .operations a:hover, td.operations a:hover,
-      a[href*="answer"]:hover {
+      a[href*="answer"]:hover, a[onclick*="operation"]:hover {
         opacity: .88 !important;
         box-shadow: 0 4px 14px rgba(106,127,200,.4) !important;
       }
