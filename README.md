@@ -58,7 +58,7 @@ js/
 │   └── eval.js        # 自动评教
 ├── ams/               # AMS 作业提交系统 ams.nju.edu.cn
 │   └── ams.js         # 顶栏/侧栏/列表/详情/欢迎页 UI 美化
-└── jiaowu/            # 旧教务系统
+└── jiaowu/
     └── init.js        # 教务页面通用初始化
 ```
 
