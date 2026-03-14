@@ -59,6 +59,7 @@ for (const mode_name in modes_reg) {
   info.setAttribute("name", "pjw");
   info.setAttribute("version", browser?.runtime?.getManifest()?.version || "");
   info.setAttribute("mode", pjw_mode);
+  info.setAttribute("base", browser?.runtime?.getURL("") || "");
   document.documentElement.appendChild(info);
 })();
 
@@ -235,6 +236,7 @@ if (pjw_mode == "portal") {
 } else if (pjw_mode == "authserver") {
   injectScripts([
     "js/common/core.js",
+    "js/onnx/captcha-local.js",
     "js/authserver/captcha.js",
   ]);
 
@@ -242,6 +244,7 @@ if (pjw_mode == "portal") {
   injectScripts([
     "js/vendor/material-components-web.min.js",
     "js/common/core.js",
+    "js/onnx/captcha-local.js",
     "js/xk/welcome.js",
     "js/jiaowu/init.js",
   ]);
