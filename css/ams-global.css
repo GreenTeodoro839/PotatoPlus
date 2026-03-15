@@ -47,3 +47,226 @@
 @keyframes pp-ams-spin {
   to { transform: rotate(360deg); }
 }
+
+/* ========== artDialog (aui_*) 弹框美化 ========== */
+
+/* 重置 ams.js section 6 的通用 table/tr/button 样式对 artDialog 的污染 */
+.aui_table tbody tr {
+  border-bottom: none !important;
+  border: none !important;
+  background: transparent !important;
+  transition: none !important;
+}
+.aui_table td {
+  padding: 0 !important;
+  border: none !important;
+}
+
+/* 清除 9-slice 精灵图边框，宽高归零 */
+.aui_border.aui_nw, .aui_border.aui_ne,
+.aui_border.aui_sw, .aui_border.aui_se {
+  width: 0 !important;
+  height: 0 !important;
+  background: none !important;
+  padding: 0 !important;
+}
+.aui_border.aui_n, .aui_border.aui_s {
+  background: none !important;
+  height: 0 !important;
+}
+.aui_border.aui_w, .aui_border.aui_e {
+  background: none !important;
+  width: 0 !important;
+}
+
+/* 圆角裁剪在最外层，确保整个弹框被正确裁剪 */
+.aui_focus {
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  box-shadow: 0 8px 32px rgba(100, 120, 200, 0.28) !important;
+}
+/* 外层 outer 跟随圆角，不再单独裁剪 */
+.aui_outer {
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+/* 标题栏：主题渐变 */
+.aui_header {
+  background: linear-gradient(-70deg, #9a6eb3, #437eca) !important;
+  padding: 0 !important;
+}
+.aui_titleWrap {
+  height: auto !important;
+  position: relative !important;
+  bottom: auto !important;
+  padding: 10px 14px !important;
+}
+.aui_title {
+  height: auto !important;
+  line-height: 1.5 !important;
+  color: #fff !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  text-shadow: none !important;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif !important;
+}
+
+/* 关闭按钮 */
+.aui_close {
+  position: absolute !important;
+  top: 50% !important;
+  right: 12px !important;
+  transform: translateY(-50%) !important;
+  background: none !important;
+  background-image: none !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-size: 18px !important;
+  text-indent: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  line-height: 1 !important;
+  text-decoration: none !important;
+}
+.aui_close:hover {
+  color: #fff !important;
+  background: none !important;
+}
+
+/* 内容区白色底 */
+.aui_inner {
+  background: #fff !important;
+}
+.aui_content {
+  color: #2c3e60 !important;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+}
+.aui_tdIcon {
+  vertical-align: middle !important;
+  padding: 0 0 0 16px !important;
+}
+
+/* 底部按钮区 */
+.aui_footer {
+  background: #f8f9fc !important;
+  border-top: 1px solid #e2e6f0 !important;
+}
+.aui_buttons {
+  text-align: right !important;
+  padding: 10px 14px !important;
+}
+.aui_buttons button {
+  background: linear-gradient(-70deg, #9a6eb3, #437eca) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 999px !important;
+  padding: 7px 18px !important;
+  font-size: 13px !important;
+  box-shadow: 0 4px 12px rgba(106, 127, 200, 0.28) !important;
+  cursor: pointer !important;
+  text-shadow: none !important;
+  filter: none !important;
+  letter-spacing: 1px !important;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif !important;
+}
+.aui_buttons button:hover {
+  opacity: 1 !important;
+  box-shadow: 0 6px 18px rgba(106, 127, 200, 0.42) !important;
+}
+.aui_buttons button:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(106, 127, 200, 0.3) !important;
+}
+/* 防止 dialog 区域内任何元素因通用 hover 规则变透明 */
+.aui_focus *:hover {
+  opacity: 1 !important;
+}
+.aui_buttons button:hover {
+  opacity: 1 !important;
+}
+
+/* ========== layui-layer 弹框全局美化 ========== */
+
+/* 所有类型弹框：圆角、阴影、无边框 */
+.layui-layer {
+  background: #fff !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(100, 120, 200, 0.22) !important;
+}
+
+/* 标题栏：主题渐变 */
+.layui-layer-title {
+  background: linear-gradient(-70deg, #9a6eb3, #437eca) !important;
+  color: #fff !important;
+  border-bottom: none !important;
+  border-radius: 12px 12px 0 0 !important;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+}
+
+/* 关闭按钮：白色 */
+.layui-layer-setwin .layui-layer-close1 {
+  background-position: -149px -31px !important;
+  filter: brightness(0) invert(1) !important;
+  opacity: 0.85 !important;
+}
+.layui-layer-setwin .layui-layer-close1:hover {
+  opacity: 1 !important;
+}
+
+/* 内容区：字体统一 */
+.layui-layer-content {
+  color: #2c3e60 !important;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif !important;
+  font-size: 14px !important;
+}
+
+/* 底部按钮区 */
+.layui-layer-btn {
+  border-top: 1px solid #e2e6f0 !important;
+  background: #f8f9fc !important;
+  border-radius: 0 0 12px 12px !important;
+  padding: 10px 14px !important;
+}
+
+/* 所有按钮：主题风格 */
+.layui-layer-btn a {
+  background: linear-gradient(-70deg, #9a6eb3, #437eca) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 999px !important;
+  height: auto !important;
+  line-height: 1 !important;
+  padding: 7px 18px !important;
+  font-size: 13px !important;
+  box-shadow: 0 4px 12px rgba(106, 127, 200, 0.28) !important;
+  text-decoration: none !important;
+  letter-spacing: 0.5px !important;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif !important;
+}
+.layui-layer-btn a:hover {
+  opacity: 0.9 !important;
+  box-shadow: 0 6px 18px rgba(106, 127, 200, 0.4) !important;
+}
+/* 次要按钮（取消等）：浅色描边风格 */
+.layui-layer-btn .layui-layer-btn1,
+.layui-layer-btn .layui-layer-btn2 {
+  background: #fff !important;
+  color: #6a7fc8 !important;
+  border: 1px solid rgba(106, 127, 200, 0.4) !important;
+  box-shadow: none !important;
+}
+.layui-layer-btn .layui-layer-btn1:hover,
+.layui-layer-btn .layui-layer-btn2:hover {
+  background: #f0f4ff !important;
+  opacity: 1 !important;
+}
+
+/* 遮罩层：半透明深色 */
+.layui-layer-shade {
+  background: rgba(44, 62, 96, 0.35) !important;
+}

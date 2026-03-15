@@ -730,6 +730,7 @@
         background-image: ${GRAD_SOLID} !important;
         color: #fff !important;
       }
+
     `);
 
   // ============================================================
