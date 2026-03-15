@@ -160,6 +160,8 @@
         padding: 4px 8px !important;
         border-radius: ${RADIUS_SM} !important;
         transition: all .15s !important;
+        display: inline-flex !important;
+        align-items: center !important;
       }
       .ztree li a:hover, .ztree li span.node_name:hover {
         background: rgba(100,127,200,.12) !important;
@@ -227,31 +229,27 @@
         background-image: none !important;
         width: auto !important;
         min-width: 16px !important;
-        height: 16px !important;
-        display: inline-block !important;
-        vertical-align: middle !important;
-        font-size: 14px !important;
-        line-height: 18px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        font-size: 13px !important;
+        line-height: 1 !important;
         text-align: center !important;
         overflow: visible !important;
       }
       .ztree li span.ico_open::after {
         content: "📂" !important;
-        font-size: 14px !important;
-        line-height: 18px !important;
-        vertical-align: top !important;
+        font-size: 13px !important;
+        line-height: 1 !important;
       }
       .ztree li span.ico_close::after {
         content: "📁" !important;
-        font-size: 14px !important;
-        line-height: 18px !important;
-        vertical-align: top !important;
+        font-size: 13px !important;
+        line-height: 1 !important;
       }
       .ztree li span.ico_docu::after {
         content: "📄" !important;
-        font-size: 14px !important;
-        line-height: 18px !important;
-        vertical-align: top !important;
+        font-size: 13px !important;
+        line-height: 1 !important;
       }
 
       /* zTree 连线隐藏 */
