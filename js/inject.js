@@ -47,7 +47,7 @@ var modes_reg = {
 
 let pjw_mode = "";
 for (const mode_name in modes_reg) {
-  if (modes_reg[mode_name].test(window.location.href) == true) {
+  if (modes_reg[mode_name].test(window.location.href)) {
     pjw_mode = mode_name;
     break;
   }

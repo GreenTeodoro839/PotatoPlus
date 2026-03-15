@@ -616,27 +616,27 @@ var pjw_filter = {
       return 0;
     },
     handlePotatoes: (space) => {
-      if (space.potatoes_queue.length == 0 || space.is_select_ongoing == false || space.switch.selected == false) {
+      if (space.potatoes_queue.length == 0 || !space.is_select_ongoing || !space.switch.selected) {
         space.is_select_ongoing = false;
         return;
       }
-      data = space.potatoes_queue[0][0];
-      class_obj = space.potatoes_queue[0][1];
+      const data = space.potatoes_queue[0][0];
+      const class_obj = space.potatoes_queue[0][1];
       space.potatoes_queue = space.potatoes_queue.slice(1);
       if (data.select_button && data.select_button.action && data.select_button.status == "Select") {
         var e = {data: {target: class_obj}};
         data.select_button.action(e).then(() => {
           class_obj.list.console.debug("Got a success from the potatoes module!");
-          if (space.continue_on_success == true)
+          if (space.continue_on_success)
             space.handlePotatoes(space);
           else
-            space.switch.selected = space.status = is_select_ongoing = false;
+            space.switch.selected = space.status = space.is_select_ongoing = false;
         }).catch((res) => {
           class_obj.list.console.debug("Got an error from the potatoes module: " + res);
-          if (space.continue_on_failure == true)
+          if (space.continue_on_failure)
             space.handlePotatoes(space);
           else 
-            space.switch.selected = space.status = is_select_ongoing = false;
+            space.switch.selected = space.status = space.is_select_ongoing = false;
         });
       } else {
         space.handlePotatoes(space);

@@ -45,13 +45,13 @@ function ClassListPlugin() {
   window.PJWClass = class {
     show() {
       if (!this.initialized) this.intl();
-      if (this.display == true) return;
+      if (this.display) return;
       this.display = true;
       this.dom.css("display", "flex");
     }
 
     hide() {
-      if (!this.initialized || this.display == false) return;
+      if (!this.initialized || !this.display) return;
       this.display = false;
       this.dom.css("display", "none");
     }
@@ -215,7 +215,7 @@ function ClassListPlugin() {
         ];
 
         for (const item of data) {
-          if (item.weekday > 5 && weekend_flag == false)
+          if (item.weekday > 5 && !weekend_flag)
             weekend_flag = true;
 
           has_lecture[item.weekday]++;
@@ -233,7 +233,7 @@ function ClassListPlugin() {
         const weekday_display_name = ["", "M", "TU", "W", "TH", "F", "SA", "SU"];
 
         for (let i = 1; i <= 7; i++) {
-          if (i > 5 && weekend_flag == false) break;
+          if (i > 5 && !weekend_flag) break;
 
           let data_arc = hourly_css_class[i].map((x) => (
             x == "" ? "0" : (x.includes("even") || x.includes("odd") ? "2" : "1")
@@ -314,7 +314,7 @@ function ClassListPlugin() {
               ${info_text}
             </div>
           </div>`;
-        if (get_inner === true)
+        if (get_inner)
           return {
             html: inner_html,
             disabled: (disabled == "disabled"),
@@ -1144,7 +1144,7 @@ function ClassListPlugin() {
           }
         }
 
-        if (has_week_info == false && has_lesson_time_info == true)
+        if (!has_week_info && has_lesson_time_info)
           for (var i = 1; i <= total_weeks; i++)
             weeks[i] = 1;
 
@@ -1170,7 +1170,7 @@ function ClassListPlugin() {
     }
 
     checkScroll() {
-      if ("scroll_lock" in this && this.scroll_lock == true) return;
+      if ("scroll_lock" in this && this.scroll_lock) return;
       this.scroll_lock = true;
       if (this.class_data.length > this.max_classes_loaded 
           && $$(window).scrollTop() + $$(window).height() + 1800 >= $$(document).height()) {
@@ -1546,7 +1546,7 @@ function ClassListPlugin() {
             if (typeof(e.data.space["onswitch"]) == "function")
               e.data.space.onswitch(e.data.space, e.data.list);
             if (e.data.space.dom.find(".content").length) {
-              if (e.data.space.enabled == true) {
+              if (e.data.space.enabled) {
                 e.data.space.dom.find(".content").show();
               } else {
                 e.data.space.dom.find(".content").hide();
