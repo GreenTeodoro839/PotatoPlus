@@ -10,13 +10,48 @@
     // 不 return，继续往下走等 MutationObserver 捕获 .hall > .body
   }
 
-  // ehall appShow 入口（需登录态才能正确跳转到子应用）
-  var EHALL_BASE = "https://ehall.nju.edu.cn/appShow?appId=";
-  var APP_GRADE = EHALL_BASE + "4768574631264620";   // 成绩查询
-  var APP_EVAL  = EHALL_BASE + "5856333445645704";   // 本-网上评教
-  var APP_XK    = "https://xk.nju.edu.cn/";          // 选课
+  function renderMenuButtons(items) {
+    var buttonsDiv = document.getElementById("pp-menu-buttons");
+    if (!buttonsDiv) return;
+    buttonsDiv.innerHTML = items.map(function(item) {
+      return '<a class="pp-menu-btn" href="' + item.url + '" target="_blank">' +
+             '<span class="pp-menu-btn-icon">' + item.emoji + '</span>' +
+             item.label + '</a>';
+    }).join("");
+  }
 
-  var APP_COURSES = EHALL_BASE + "4766960573884517"; // 查询全部课程
+  function getMenuConfig() {
+    if (!window.pjw) return;
+
+    // 有缓存且未超过 24 小时，直接渲染
+    if (pjw.data.menu_items && (pjw.data.menu_config_timestamp || 0) + 86400000 > new Date().getTime()) {
+      renderMenuButtons(pjw.data.menu_items);
+      return;
+    }
+
+    var iframe = document.createElement("iframe");
+    iframe.src = "https://potatoplus.zcec.top/apps/potatoplus-menu/";
+    iframe.style.display = "none";
+    document.body.appendChild(iframe);
+
+    function menuHandler(e) {
+      if (e.origin !== "https://potatoplus.zcec.top") return;
+      if (e.data) try {
+        var data = JSON.parse(e.data);
+        if (data.type !== "menu-config") return;
+        window.removeEventListener("message", menuHandler);
+        iframe.remove();
+        var items = data.items;
+        if (!Array.isArray(items)) return;
+        pjw.data.menu_items = items;
+        pjw.data.menu_config_timestamp = new Date().getTime();
+        renderMenuButtons(items);
+      } catch (err) {
+        console.warn("[PotatoPlus] menu config parse error:", err);
+      }
+    }
+    window.addEventListener("message", menuHandler);
+  }
 
   var CSS = `
     /* ===== 容器：纵向堆叠，全宽 ===== */
@@ -264,24 +299,7 @@
         </div>
         <button class="pp-sched-open" id="pp-schedule-btn" title="查看课表">📅 课表</button>
       </div>
-      <div class="pp-menu-buttons">
-        <a class="pp-menu-btn" href="${APP_GRADE}" target="_blank">
-          <span class="pp-menu-btn-icon">📊</span>
-          成绩查询
-        </a>
-        <a class="pp-menu-btn" href="${APP_XK}" target="_blank">
-          <span class="pp-menu-btn-icon">📚</span>
-          选课
-        </a>
-        <a class="pp-menu-btn" href="${APP_EVAL}" target="_blank">
-          <span class="pp-menu-btn-icon">📝</span>
-          一键评教
-        </a>
-        <a class="pp-menu-btn" href="${APP_COURSES}" target="_blank">
-          <span class="pp-menu-btn-icon">🔍</span>
-          查询全部课程
-        </a>
-      </div>
+      <div class="pp-menu-buttons" id="pp-menu-buttons"></div>
     `;
 
     // --- 信息卡片（下）---
@@ -338,6 +356,7 @@
             var el = document.getElementById("pp-home-bulletin");
             if (el) el.innerHTML = data.content;
             window.removeEventListener("message", bulletinHandler);
+            iframe.remove();
           }
         } catch (err) {
           console.warn("[PotatoPlus] bulletin parse error:", err);
@@ -366,6 +385,7 @@
       body.insertBefore(cards, body.firstChild);
     }
     getBulletin();
+    getMenuConfig();
 
     // 课表按钮绑定
     var schedBtn = document.getElementById("pp-schedule-btn");
