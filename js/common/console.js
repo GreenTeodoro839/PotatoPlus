@@ -77,9 +77,9 @@ window.PJWConsole = class {
       warning: [true, "#b74710"],
       done: [true, "limegreen"],
       favorite: [false, "rgb(255, 99, 144)"],
-      info: [false],
+      info: [false, null],
       alarm: [true, "#9eb314"],
-      code: [false]
+      code: [false, null]
     };
     
     this.setColor(action[type][1]);

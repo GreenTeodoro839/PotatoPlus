@@ -2,7 +2,7 @@
 // Depends on: common/core.js (pjw global), jQuery ($$)
 
 window.potatojw_intl = function() {
-  if (pjw.initialized == true) return;
+  if (pjw.initialized) return;
   pjw.initialized = true;
   
   if (typeof jQuery === "undefined") return;
