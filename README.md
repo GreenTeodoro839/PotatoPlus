@@ -5,7 +5,7 @@ NJU 土豆改善工程 — 南京大学教务系统浏览器扩展
 ## 功能
 
 - **校园网快捷登录** — p.nju.edu.cn 未登录时拦截 CAS 跳转，展示内置登录页，直接完成校园网认证
-- **统一身份认证验证码自动识别** — authserver.nju.edu.cn 登录页验证码自动填写
+- **统一身份认证页面美化** — authserver.nju.edu.cn 登录页替换为 PotatoPlus 风格界面，含验证码自动识别、记住密码、扫码登录入口
 - **选课平台美化** — xk.nju.edu.cn 课程列表增强、筛选、收藏
 - **选课平台验证码识别** — xk.nju.edu.cn 登录验证码自动点选
 - **GPA 计算器** — 成绩页面内置学分绩计算，页面加载后自动弹出面板
@@ -46,7 +46,8 @@ js/
 │   ├── filter.js      # 课程筛选逻辑
 │   └── classlist.js   # 课程列表组件
 ├── authserver/        # 统一身份认证 authserver.nju.edu.cn
-│   └── captcha.js     # 登录验证码识别
+│   ├── login.js       # 页面美化覆盖层（PotatoPlus 风格登录界面）
+│   └── captcha.js     # 原始页面验证码识别（美化关闭时）
 ├── xk/                # 选课系统 xk.nju.edu.cn
 │   ├── welcome.js     # 登录页增强 + 验证码识别
 │   └── course.js      # 选课列表增强
