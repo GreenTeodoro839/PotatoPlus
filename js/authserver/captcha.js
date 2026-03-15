@@ -42,6 +42,19 @@ function initAuthserver() {
   container.appendChild(wrapper);
   console.log("[PotatoPlus] UI wrapper inserted");
 
+  // 添加"启用 PotatoPlus 劫持登录"按钮
+  const enableHijackBtn = document.createElement("span");
+  enableHijackBtn.textContent = "PotatoPlus \u7f8e\u5316";
+  enableHijackBtn.title = "\u70b9\u51fb\u542f\u7528 PotatoPlus \u9875\u9762\u7f8e\u5316";
+  enableHijackBtn.style.cssText = "cursor:pointer;user-select:none;border:1px solid #ccc;border-radius:4px;padding:1px 5px;font-size:12px;color:#999;margin-left:4px;";
+  enableHijackBtn.addEventListener("mouseover", function() { enableHijackBtn.style.borderColor = "#90138b"; enableHijackBtn.style.color = "#90138b"; });
+  enableHijackBtn.addEventListener("mouseout",  function() { enableHijackBtn.style.borderColor = "#ccc";    enableHijackBtn.style.color = "#999"; });
+  enableHijackBtn.addEventListener("click", function() {
+    pjw.preferences.authserver_hijack = true;
+    location.reload();
+  });
+  wrapper.appendChild(enableHijackBtn);
+
   // --- Config dialog (appended to body) ---
   const dialogEl = document.createElement("div");
   dialogEl.id = "pjw-authserver-captcha-config-dialog";

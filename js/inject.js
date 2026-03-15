@@ -233,10 +233,27 @@ if (pjw_mode == "portal") {
   ]);
 
 } else if (pjw_mode == "authserver") {
-  injectScripts([
-    "js/common/core.js",
-    "js/authserver/captcha.js",
-  ]);
+  var _pjwAuthD = {};
+  try { _pjwAuthD = JSON.parse(localStorage.getItem("potatoplus_data")) || {}; } catch (_) {}
+  if (_pjwAuthD.authserver_hijack !== false) {
+    // 劫持模式：隐藏原始页面，注入自定义登录界面
+    injectStyleFromString(
+      "body{visibility:hidden!important}" +
+      "#pjw-as-overlay{visibility:visible!important}" +
+      "#pjw-as-config-dialog{visibility:visible!important}" +
+      "#pjw-as-toast-wrap{visibility:visible!important}"
+    );
+    injectScripts([
+      "js/common/core.js",
+      "js/authserver/login.js",
+    ]);
+  } else {
+    // 非劫持模式：加载验证码识别器（含"启用劫持"入口）
+    injectScripts([
+      "js/common/core.js",
+      "js/authserver/captcha.js",
+    ]);
+  }
 
 } else if (pjw_mode == "welcome") {
   injectScripts([
