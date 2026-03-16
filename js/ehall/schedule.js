@@ -136,7 +136,6 @@
       if(semStart)curWeek=Math.max(1,calcWeek(semStart));
       buildModal(modal);
     }).catch(function(e){
-      console.error("[PotatoPlus]",e);
       showError(modal,e.message);
     });
   }
