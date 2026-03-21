@@ -733,6 +733,247 @@
 
     `);
 
+    // ---- 批量插入 LaTeX 功能 ----
+    injectCSS(`
+      .pp-latex-fab {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        z-index: 99999;
+        background: ${GRAD_SOLID};
+        color: #fff;
+        border: none;
+        border-radius: 999px;
+        padding: 10px 22px;
+        font-size: 13px;
+        font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+        cursor: pointer;
+        box-shadow: 0 4px 16px rgba(106,127,200,.35);
+        transition: opacity .2s, box-shadow .2s;
+        letter-spacing: .5px;
+      }
+      .pp-latex-fab:hover {
+        opacity: .9;
+        box-shadow: 0 6px 22px rgba(106,127,200,.45);
+      }
+      .pp-latex-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,.45);
+        z-index: 100000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+      .pp-latex-modal {
+        background: #fff;
+        border-radius: 16px;
+        padding: 28px;
+        width: 560px;
+        max-height: 80vh;
+        box-shadow: 0 12px 40px rgba(0,0,0,.22);
+      }
+      .pp-latex-modal h3 {
+        margin: 0 0 6px;
+        font-size: 17px;
+        color: ${TEXT_MAIN};
+      }
+      .pp-latex-modal p {
+        margin: 0 0 14px;
+        font-size: 12px;
+        color: ${TEXT_MUTED};
+      }
+      .pp-latex-modal textarea {
+        width: 100%;
+        min-height: 180px;
+        border: 1px solid ${BORDER};
+        border-radius: 10px;
+        padding: 12px;
+        font-size: 13px;
+        font-family: "Consolas", "Monaco", monospace;
+        resize: vertical;
+        box-sizing: border-box;
+        outline: none;
+        transition: border-color .2s;
+      }
+      .pp-latex-modal textarea:focus {
+        border-color: ${ACCENT};
+        box-shadow: 0 0 0 3px rgba(106,127,200,.12);
+      }
+      .pp-latex-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 16px;
+      }
+      .pp-latex-actions button {
+        border: none;
+        border-radius: 999px;
+        padding: 8px 22px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: opacity .2s;
+      }
+      .pp-latex-actions button:disabled {
+        opacity: .5;
+        cursor: not-allowed;
+      }
+      .pp-latex-cancel-btn {
+        background: #f0f2f5;
+        color: ${TEXT_MAIN};
+      }
+      .pp-latex-submit-btn {
+        background: ${GRAD_SOLID};
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(106,127,200,.3);
+      }
+      .pp-latex-status {
+        margin-top: 10px;
+        font-size: 12px;
+        color: ${ACCENT};
+        min-height: 18px;
+      }
+    `);
+
+    (function initLatexBatch() {
+      function waitFor(testFn, cb, interval) {
+        if (testFn()) return cb(testFn());
+        setTimeout(function () { waitFor(testFn, cb, interval); }, interval || 300);
+      }
+
+      waitFor(
+        function () { return window.tinymce && tinymce.activeEditor; },
+        function () {
+          var fab = document.createElement("button");
+          fab.className = "pp-latex-fab";
+          fab.textContent = "\u03a3 \u6279\u91cf\u63d2\u5165 LaTeX";
+          document.body.appendChild(fab);
+          fab.addEventListener("click", showPopup);
+
+          function parseLines(text) {
+            return text.split("\n")
+              .map(function (l) { return l.trim(); })
+              .filter(function (l) { return l.length > 0; })
+              .map(function (l) {
+                if (l.indexOf("$$") === 0 && l.lastIndexOf("$$") === l.length - 2 && l.length > 4)
+                  return l.slice(2, -2).trim();
+                if (l.charAt(0) === "$" && l.charAt(l.length - 1) === "$" && l.length > 2)
+                  return l.slice(1, -1).trim();
+                return l;
+              })
+              .filter(function (l) { return l.length > 0; });
+          }
+
+          function showPopup() {
+            var overlay = document.createElement("div");
+            overlay.className = "pp-latex-overlay";
+            overlay.innerHTML =
+              '<div class="pp-latex-modal">' +
+                '<h3>\u03a3 \u6279\u91cf\u63d2\u5165 LaTeX</h3>' +
+                '<p>\u6bcf\u884c\u4e00\u4e2a\u516c\u5f0f\uff0c\u652f\u6301 $ \u6216 $$ \u5305\u88f9\uff0c\u4e5f\u53ef\u4e0d\u5305\u88f9</p>' +
+                '<textarea class="pp-latex-input" spellcheck="false" placeholder="$V_{o1}=V_{i1}$&#10;$\\frac{R_2}{R_1+R_2}\\cdot V_{i1}$&#10;A_V=-\\frac{R_2 R_4}{R_1 R_3}"></textarea>' +
+                '<div class="pp-latex-actions">' +
+                  '<button class="pp-latex-cancel-btn">\u53d6\u6d88</button>' +
+                  '<button class="pp-latex-submit-btn">\u63d2\u5165</button>' +
+                '</div>' +
+                '<div class="pp-latex-status"></div>' +
+              '</div>';
+            document.body.appendChild(overlay);
+
+            overlay.querySelector(".pp-latex-cancel-btn").addEventListener("click", function () {
+              overlay.remove();
+            });
+            overlay.addEventListener("click", function (e) {
+              if (e.target === overlay) overlay.remove();
+            });
+
+            overlay.querySelector(".pp-latex-submit-btn").addEventListener("click", function () {
+              var text = overlay.querySelector(".pp-latex-input").value;
+              var lines = parseLines(text);
+              if (lines.length === 0) return;
+              var statusEl = overlay.querySelector(".pp-latex-status");
+              var submitBtn = overlay.querySelector(".pp-latex-submit-btn");
+              var cancelBtn = overlay.querySelector(".pp-latex-cancel-btn");
+              submitBtn.disabled = true;
+              cancelBtn.disabled = true;
+
+              var idx = 0;
+              function next() {
+                if (idx >= lines.length) {
+                  statusEl.textContent = "\u5b8c\u6210\uff01\u5171\u63d2\u5165 " + lines.length + " \u4e2a\u516c\u5f0f";
+                  setTimeout(function () { overlay.remove(); }, 800);
+                  return;
+                }
+                statusEl.textContent = "\u6b63\u5728\u63d2\u5165\u7b2c " + (idx + 1) + "/" + lines.length + " \u4e2a\u516c\u5f0f\u2026";
+                insertOneFormula(lines[idx], function () {
+                  idx++;
+                  next();
+                });
+              }
+              next();
+            });
+          }
+
+          function insertOneFormula(latex, done) {
+            var formulaBtn = document.querySelector('button[aria-label="\u516c\u5f0f\u7f16\u8f91\u5668"]');
+            if (!formulaBtn) { done(); return; }
+
+            var ed = tinymce.activeEditor;
+            formulaBtn.click();
+
+            // Wait for dialog iframe and MathQuill
+            waitFor(
+              function () {
+                var iframe = document.querySelector(".tox-dialog iframe");
+                if (!iframe) return null;
+                try {
+                  var fw = iframe.contentWindow;
+                  var fd = iframe.contentDocument;
+                  if (!fw.MathQuill) return null;
+                  var mqEl = fd.querySelector(".mq-editable-field");
+                  if (!mqEl) return null;
+                  return { fw: fw, fd: fd, mqEl: mqEl };
+                } catch (e) { return null; }
+              },
+              function (ctx) {
+                var MQ = ctx.fw.MathQuill.getInterface(2);
+                var mathField = MQ(ctx.mqEl);
+                mathField.latex("");
+                mathField.write(latex);
+
+                // Click save
+                setTimeout(function () {
+                  var btns = document.querySelectorAll(".tox-dialog .tox-button");
+                  var saveBtn = null;
+                  for (var i = 0; i < btns.length; i++) {
+                    if (btns[i].textContent.trim() === "\u4fdd\u5b58\u5e76\u8fd4\u56de") {
+                      saveBtn = btns[i];
+                      break;
+                    }
+                  }
+                  if (saveBtn) saveBtn.click();
+
+                  // Wait for dialog to close, then insert a line break
+                  waitFor(
+                    function () { return !document.querySelector(".tox-dialog"); },
+                    function () {
+                      // Insert a new paragraph after the formula so next formula goes to a new line
+                      ed.execCommand("mceInsertContent", false, "<p><br></p>");
+                      setTimeout(done, 200);
+                    },
+                    100
+                  );
+                }, 500);
+              },
+              200
+            );
+          }
+        },
+        500
+      );
+    })();
+
   // ============================================================
   // 6. 作业详情/作答页  tc_questions/view_and_answer_homework.htm & view_homework.htm
   // ============================================================
