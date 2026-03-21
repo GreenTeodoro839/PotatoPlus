@@ -395,6 +395,25 @@ pjw._authserverHijackActive = pjw.isOn("authserver_hijack");
       if (e.target === configDialog) configDialog.classList.remove("pjw-active");
     });
 
+    // --- 阻止键盘事件冒泡到原始页面（原始页面在 body 上监听 keyup Enter 来触发登录，会导致双重提交） ---
+    overlay.addEventListener("keydown", function(e) { e.stopPropagation(); });
+    overlay.addEventListener("keyup",   function(e) { e.stopPropagation(); });
+    overlay.addEventListener("keypress",function(e) { e.stopPropagation(); });
+
+    // --- 焦点在 overlay 外时（如原始隐藏表单），Enter 键同样交由 overlay 处理 ---
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "Enter" && !overlay.contains(document.activeElement)) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        submitEl.click();
+      }
+    }, true);
+    document.addEventListener("keyup", function(e) {
+      if (e.key === "Enter" && !overlay.contains(document.activeElement)) {
+        e.stopImmediatePropagation();
+      }
+    }, true);
+
     // --- 表单提交 ---
     document.getElementById("pjw-as-form").addEventListener("submit", function(e) {
       e.preventDefault();
