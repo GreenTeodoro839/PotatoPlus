@@ -847,22 +847,43 @@
         function () {
           var fab = document.createElement("button");
           fab.className = "pp-latex-fab";
-          fab.textContent = "\u03a3 \u6279\u91cf\u63d2\u5165 LaTeX";
+          fab.textContent = "\u03a3 \u6279\u91cf\u63d2\u5165";
           document.body.appendChild(fab);
           fab.addEventListener("click", showPopup);
 
-          function parseLines(text) {
-            return text.split("\n")
-              .map(function (l) { return l.trim(); })
-              .filter(function (l) { return l.length > 0; })
-              .map(function (l) {
-                if (l.indexOf("$$") === 0 && l.lastIndexOf("$$") === l.length - 2 && l.length > 4)
-                  return l.slice(2, -2).trim();
-                if (l.charAt(0) === "$" && l.charAt(l.length - 1) === "$" && l.length > 2)
-                  return l.slice(1, -1).trim();
-                return l;
-              })
-              .filter(function (l) { return l.length > 0; });
+          // Parse mixed text+formula input into segments
+          // Supports $...$ and $$...$$ delimiters
+          function parseSegments(text) {
+            var segments = [];
+            var lines = text.split("\n");
+            for (var li = 0; li < lines.length; li++) {
+              var line = lines[li].trim();
+              if (line.length === 0) continue;
+              // Tokenize the line: split by $$ or $ delimited formulas
+              var re = /\$\$([^$]+?)\$\$|\$([^$]+?)\$/g;
+              var lastIdx = 0;
+              var match;
+              while ((match = re.exec(line)) !== null) {
+                // Text before this match
+                if (match.index > lastIdx) {
+                  var t = line.slice(lastIdx, match.index).trim();
+                  if (t) segments.push({ type: "text", content: t });
+                }
+                var latex = (match[1] || match[2]).trim();
+                if (latex) segments.push({ type: "formula", content: latex });
+                lastIdx = re.lastIndex;
+              }
+              // Remaining text after last match (or entire line if no $ found)
+              if (lastIdx < line.length) {
+                var rest = line.slice(lastIdx).trim();
+                if (rest) segments.push({ type: "text", content: rest });
+              }
+              // Add line break between lines
+              if (li < lines.length - 1) {
+                segments.push({ type: "newline" });
+              }
+            }
+            return segments;
           }
 
           function showPopup() {
@@ -870,9 +891,9 @@
             overlay.className = "pp-latex-overlay";
             overlay.innerHTML =
               '<div class="pp-latex-modal">' +
-                '<h3>\u03a3 \u6279\u91cf\u63d2\u5165 LaTeX</h3>' +
-                '<p>\u6bcf\u884c\u4e00\u4e2a\u516c\u5f0f\uff0c\u652f\u6301 $ \u6216 $$ \u5305\u88f9\uff0c\u4e5f\u53ef\u4e0d\u5305\u88f9</p>' +
-                '<textarea class="pp-latex-input" spellcheck="false" placeholder="$V_{o1}=V_{i1}$&#10;$\\frac{R_2}{R_1+R_2}\\cdot V_{i1}$&#10;A_V=-\\frac{R_2 R_4}{R_1 R_3}"></textarea>' +
+                '<h3>\u03a3 \u6279\u91cf\u63d2\u5165</h3>' +
+                '<p>直接粘贴文本，用 $...$ 或 $$...$$ 包裹公式，其余部分作为普通文字插入</p>' +
+                '<textarea class="pp-latex-input" spellcheck="false" placeholder="由题意可得&#10;$V_{o1}=V_{i1}$&#10;其中 $R_1$ 和 $R_2$ 为分压电阻&#10;所以最终结果为 $A_V=-\\frac{R_2 R_4}{R_1 R_3}$"></textarea>' +
                 '<div class="pp-latex-actions">' +
                   '<button class="pp-latex-cancel-btn">\u53d6\u6d88</button>' +
                   '<button class="pp-latex-submit-btn">\u63d2\u5165</button>' +
@@ -890,26 +911,47 @@
 
             overlay.querySelector(".pp-latex-submit-btn").addEventListener("click", function () {
               var text = overlay.querySelector(".pp-latex-input").value;
-              var lines = parseLines(text);
-              if (lines.length === 0) return;
+              var segments = parseSegments(text);
+              if (segments.length === 0) return;
               var statusEl = overlay.querySelector(".pp-latex-status");
               var submitBtn = overlay.querySelector(".pp-latex-submit-btn");
               var cancelBtn = overlay.querySelector(".pp-latex-cancel-btn");
               submitBtn.disabled = true;
               cancelBtn.disabled = true;
 
+              var ed = tinymce.activeEditor;
               var idx = 0;
+              var formulaCount = 0;
+              var textCount = 0;
               function next() {
-                if (idx >= lines.length) {
-                  statusEl.textContent = "\u5b8c\u6210\uff01\u5171\u63d2\u5165 " + lines.length + " \u4e2a\u516c\u5f0f";
+                if (idx >= segments.length) {
+                  var parts = [];
+                  if (textCount > 0) parts.push(textCount + " 段文字");
+                  if (formulaCount > 0) parts.push(formulaCount + " 个公式");
+                  statusEl.textContent = "完成！共插入 " + parts.join("、");
                   setTimeout(function () { overlay.remove(); }, 800);
                   return;
                 }
-                statusEl.textContent = "\u6b63\u5728\u63d2\u5165\u7b2c " + (idx + 1) + "/" + lines.length + " \u4e2a\u516c\u5f0f\u2026";
-                insertOneFormula(lines[idx], function () {
+                var seg = segments[idx];
+                if (seg.type === "text") {
+                  statusEl.textContent = "正在插入文字…";
+                  var escaped = seg.content.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                  ed.execCommand("mceInsertContent", false, escaped);
+                  textCount++;
                   idx++;
-                  next();
-                });
+                  setTimeout(next, 100);
+                } else if (seg.type === "newline") {
+                  ed.execCommand("mceInsertContent", false, "<p><br></p>");
+                  idx++;
+                  setTimeout(next, 100);
+                } else if (seg.type === "formula") {
+                  formulaCount++;
+                  statusEl.textContent = "正在插入第 " + formulaCount + " 个公式…";
+                  insertOneFormula(seg.content, function () {
+                    idx++;
+                    next();
+                  });
+                }
               }
               next();
             });
@@ -954,12 +996,10 @@
                   }
                   if (saveBtn) saveBtn.click();
 
-                  // Wait for dialog to close, then insert a line break
+                  // Wait for dialog to close
                   waitFor(
                     function () { return !document.querySelector(".tox-dialog"); },
                     function () {
-                      // Insert a new paragraph after the formula so next formula goes to a new line
-                      ed.execCommand("mceInsertContent", false, "<p><br></p>");
                       setTimeout(done, 200);
                     },
                     100
