@@ -47,7 +47,7 @@ js/
 │   └── classlist.js   # 课程列表组件
 ├── authserver/        # 统一身份认证 authserver.nju.edu.cn
 │   ├── login.js       # 页面美化覆盖层（PotatoPlus 风格登录界面）
-│   └── captcha.js     # 原始页面验证码识别（美化关闭时）
+│   └── authserver_captcha.js # authserver 本地验证码识别
 ├── xk/                # 选课系统 xk.nju.edu.cn
 │   ├── welcome.js     # 登录页增强 + 验证码识别
 │   └── course.js      # 选课列表增强
