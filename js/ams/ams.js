@@ -10,6 +10,43 @@
 
   var url = location.href;
 
+  // The AMS TinyMCE image dialog blocks images above 300 KB by reading
+  // File/Blob.size before converting them to data URLs. Patch only that
+  // client-side size read, and keep the original file contents untouched.
+  function bypassImage300KCheck() {
+    var FAKE_LIMIT = 299 * 1024;
+
+    function isImageBlob(value) {
+      return value && typeof value.type === "string" && value.type.indexOf("image/") === 0;
+    }
+
+    function patchSizeGetter(proto) {
+      if (!proto) return;
+
+      var descriptor = Object.getOwnPropertyDescriptor(proto, "size");
+      if (!descriptor || typeof descriptor.get !== "function" || descriptor.get.__ppAms300KPatch) return;
+
+      var originalGetter = descriptor.get;
+      var patchedGetter = function () {
+        var realSize = originalGetter.call(this);
+        return isImageBlob(this) && realSize > FAKE_LIMIT ? FAKE_LIMIT : realSize;
+      };
+
+      patchedGetter.__ppAms300KPatch = true;
+
+      Object.defineProperty(proto, "size", {
+        configurable: true,
+        enumerable: descriptor.enumerable,
+        get: patchedGetter
+      });
+    }
+
+    patchSizeGetter(window.Blob && window.Blob.prototype);
+    patchSizeGetter(window.File && window.File.prototype);
+  }
+
+  bypassImage300KCheck();
+
   // 排除题目编辑页内部真正的编辑器 iframe（外层 questions_center 仍需美化底部按钮）
   if (/questions_center\.htm/.test(url) && window.frameElement && window.frameElement.name === "answer_ifr") return;
 
