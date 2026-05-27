@@ -101,6 +101,7 @@
     {
       "resources": [
         "js/*",
+        "models/*",
         "css/*",
         "fonts/*"
       ],

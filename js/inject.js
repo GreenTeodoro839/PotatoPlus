@@ -240,18 +240,18 @@ if (pjw_mode == "portal") {
     injectStyleFromString(
       "body{visibility:hidden!important}" +
       "#pjw-as-overlay{visibility:visible!important}" +
-      "#pjw-as-config-dialog{visibility:visible!important}" +
       "#pjw-as-toast-wrap{visibility:visible!important}"
     );
     injectScripts([
       "js/common/core.js",
+      "js/authserver/authserver_captcha.js",
       "js/authserver/login.js",
     ]);
   } else {
-    // 非劫持模式：加载验证码识别器（含"启用劫持"入口）
+    // 非劫持模式：加载验证码识别器
     injectScripts([
       "js/common/core.js",
-      "js/authserver/captcha.js",
+      "js/authserver/authserver_captcha.js",
     ]);
   }
 
