@@ -56,48 +56,9 @@ function initXKWelcome(getBulletin) {
             <div class="mdc-switch__focus-ring"></div>
           </span>
         </button>
-        <label for="pjw-solve-captcha-switch">验证码识别服务</label>
-        <label id="pjw-captcha-config">配置</label>
+        <label for="pjw-solve-captcha-switch">验证码自动识别（本地）</label>
       </div>
     </div>
-  </div>
-
-  <div id="pjw-captcha-config-dialog" class="mdc-dialog">
-    <div class="mdc-dialog__container">
-      <div class="mdc-dialog__surface"
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby="pjw-captcha-config-dialog-title"
-        aria-describedby="pjw-captcha-config-dialog-content">
-        <h2 class="mdc-dialog__title" id="pjw-captcha-config-dialog-title">
-          验证码识别服务配置
-        </h2>
-        <div class="mdc-dialog__content" id="pjw-captcha-config-dialog-content">
-          <p>启用验证码识别后，验证码图片将以 base64 格式发送到远程服务器进行点选识别。请配置识别服务的 URL，或留空以使用默认服务器。</p>
-          <label id="pjw-captcha-config-dialog-url" class="mdc-text-field mdc-text-field--filled" style="width: 100%;" data-mdc-auto-init="MDCRipple">
-            <span class="mdc-text-field__ripple"></span>
-            <span class="mdc-floating-label" id="pjw-captcha-config-dialog-urllabel">URL</span>
-            <input class="mdc-text-field__input" type="text" aria-labelledby="pjw-captcha-config-dialog-urllabel" placeholder="https://example.com:8000/solve">
-            <span class="mdc-line-ripple"></span>
-          </label>
-          <section style="font-size: 12px;">
-            <span>服务器需实现 POST /solve 接口，接受 {"type":"xk","image":"base64"} 并返回点击坐标。</span> <br>
-            <span>声明：默认服务器为实验性质，不保证准确度和稳定性。您的个人数据不会被服务器存储。</span>
-          </section>
-        </div>
-        <div class="mdc-dialog__actions">
-          <button type="button" class="mdc-button mdc-dialog__button" style="color: gray;" data-mdc-dialog-action="close">
-            <div class="mdc-button__ripple"></div>
-            <span class="mdc-button__label">撤销更改</span>
-          </button>
-          <button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="accept">
-            <div class="mdc-button__ripple"></div>
-            <span class="mdc-button__label">保存</span>
-          </button>
-        </div>
-      </div>
-    </div>
-    <div class="mdc-dialog__scrim"></div>
   </div>
   `;
   $("div.language").before(pjw_options_html);
@@ -119,22 +80,14 @@ function initXKWelcome(getBulletin) {
   const solve_captcha_switch = new window.mdc.switchControl.MDCSwitch(document.getElementById("pjw-solve-captcha-switch"));
   solve_captcha_switch.selected = pjw.isOn("solve_captcha");
 
-  const captcha_config_dialog = new window.mdc.dialog.MDCDialog(document.getElementById("pjw-captcha-config-dialog"));
   $("#pjw-solve-captcha-switch").on("click", () => {
     if (pjw.toggle("solve_captcha")) initCAPTCHASolver();
   });
-  $("#pjw-captcha-config").on("click", null, {
-    dialog: captcha_config_dialog
-  }, (e) => {
-    e.data.dialog.open();
-  });
 
-  const captcha_config_dialog_urlfield = new mdc.textField.MDCTextField(
-      document.getElementById("pjw-captcha-config-dialog-url"));
-  captcha_config_dialog_urlfield.value = pjw.data.captcha_solver_link || "";
-  captcha_config_dialog.buttons[1].addEventListener("click", function () {
-    pjw.data.captcha_solver_link = captcha_config_dialog_urlfield.value;
-  });
+  // Drop the deprecated remote-server URL preference, if any.
+  if (pjw.data.captcha_solver_link !== null && pjw.data.captcha_solver_link !== undefined) {
+    delete pjw.data.captcha_solver_link;
+  }
 
   function showCaptchaToast(msg, isError) {
     $("#pjw-captcha-toast").remove();
@@ -145,25 +98,6 @@ function initXKWelcome(getBulletin) {
       toast.removeClass("pjw-captcha-toast-visible");
       setTimeout(() => toast.remove(), 400);
     }, isError ? 5000 : 3000);
-  }
-
-  function getImgBase64(imgEl) {
-    const src = imgEl.src || "";
-    if (src.startsWith("data:")) {
-      const parts = src.split(",");
-      return parts.length > 1 ? parts[1] : null;
-    }
-    try {
-      const canvas = document.createElement("canvas");
-      canvas.width = imgEl.naturalWidth;
-      canvas.height = imgEl.naturalHeight;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(imgEl, 0, 0);
-      return canvas.toDataURL("image/png").split(",")[1];
-    } catch (e) {
-      console.warn("[PotatoPlus] Failed to extract captcha image:", e);
-      return null;
-    }
   }
 
   function simulateClick(el, x, y) {
@@ -188,23 +122,11 @@ function initXKWelcome(getBulletin) {
     showCaptchaToast("正在识别验证码...", false);
 
     try {
-      const b64 = getImgBase64(imgEl);
-      if (!b64) throw new Error("无法获取验证码图片");
-
-      const apiUrl = pjw.data.captcha_solver_link || "https://njucaptcha.zcec.top/solve";
-      const resp = await fetch(apiUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "xk", image: b64 })
-      });
-
-      if (!resp.ok) throw new Error(`服务器返回 HTTP ${resp.status}`);
-      const result = await resp.json();
-
-      if (!result.ok) throw new Error(result.error || "识别失败");
-      const points = result.result;
+      const startedAt = performance.now();
+      const solver = await getPjwXKCaptchaSolver();
+      const points = await solver.solve(imgEl);
       if (!Array.isArray(points) || points.length !== 4)
-        throw new Error("返回坐标数量不正确");
+        throw new Error("识别结果格式不正确");
 
       const scaleX = imgEl.clientWidth / imgEl.naturalWidth;
       const scaleY = imgEl.clientHeight / imgEl.naturalHeight;
@@ -220,7 +142,8 @@ function initXKWelcome(getBulletin) {
       ).join(",");
       $("input#verifyCode").val(verifyCode);
 
-      showCaptchaToast(`识别完成 (${(result.time_ms || 0).toFixed(0)}ms)`, false);
+      const elapsed = performance.now() - startedAt;
+      showCaptchaToast(`识别完成 (${elapsed.toFixed(0)}ms)`, false);
       console.log("[PotatoPlus] Captcha solved:", verifyCode);
     } catch (e) {
       console.log("[PotatoPlus] Captcha solve failed:", e.message);

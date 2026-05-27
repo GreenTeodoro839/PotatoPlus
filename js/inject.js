@@ -259,6 +259,7 @@ if (pjw_mode == "portal") {
   injectScripts([
     "js/vendor/material-components-web.min.js",
     "js/common/core.js",
+    "js/xk/captcha_ocr.js",
     "js/xk/welcome.js",
     "js/jiaowu/init.js",
   ]);
