@@ -216,29 +216,77 @@
     document.head.appendChild(s);
   }
 
+  var SCHEDULE_CACHE_KEY = "potatoplus_schedule_cache";
+  var SCHEDULE_CACHE_TTL = 7 * 24 * 3600 * 1000;
+  var _scheduleFetchPending = false;
+
   function getDateString() {
     var d = new Date();
     var days = ["日", "一", "二", "三", "四", "五", "六"];
     return (d.getMonth() + 1) + "月" + d.getDate() + "日 星期" + days[d.getDay()];
   }
 
-  function getSemesterName() {
+  function getScheduleCache() {
     try {
-      var cache = JSON.parse(localStorage.getItem("potatoplus_schedule_cache"));
-      if (cache && cache.termName) return cache.termName;
-    } catch (e) {}
+      var cache = JSON.parse(localStorage.getItem(SCHEDULE_CACHE_KEY));
+      if (!cache || !cache.timestamp) return null;
+      if (Date.now() - cache.timestamp > SCHEDULE_CACHE_TTL) return null;
+      if (!cacheMatchesCurrentTerm(cache)) return null;
+      return cache;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function cacheMatchesCurrentTerm(cache) {
+    var code = cache.termCode || termCodeFromName(cache.termName);
+    return !code || dateInTermCode(new Date(), code);
+  }
+
+  function termCodeFromName(name) {
+    var s = String(name || "");
+    var yearMatch = s.match(/(\d{4})-(\d{4})/);
+    if (!yearMatch) return "";
+    var tail = s.slice(yearMatch.index + yearMatch[0].length);
+    var termMatch = tail.match(/[123]/);
+    var term = termMatch ? termMatch[0] : (/\u6691/.test(tail) ? "3" : "");
+    return term ? yearMatch[1] + "-" + yearMatch[2] + "-" + term : "";
+  }
+
+  function dateInTermCode(date, code) {
+    var match = String(code || "").match(/^(\d{4})-(\d{4})-([123])$/);
+    if (!match) return true;
+    var yearStart = parseInt(match[1], 10);
+    var yearEnd = parseInt(match[2], 10);
+    var termNo = parseInt(match[3], 10);
+    var start = null;
+    var end = null;
+    if (termNo === 1) {
+      start = new Date(yearStart, 8, 1);
+      end = new Date(yearEnd, 1, 1);
+    } else if (termNo === 2) {
+      start = new Date(yearEnd, 1, 1);
+      end = new Date(yearEnd, 6, 1);
+    } else if (termNo === 3) {
+      start = new Date(yearEnd, 6, 1);
+      end = new Date(yearEnd, 8, 1);
+    }
+    var today = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    return (!start || today >= start) && (!end || today < end);
+  }
+
+  function getSemesterName() {
+    var cache = getScheduleCache();
+    if (cache && cache.termName) return cache.termName;
+    fetchWeekAsync();
     return "";
   }
 
   function getWeekString() {
-    // 从缓存获取教学周
-    try {
-      var cache = JSON.parse(localStorage.getItem("potatoplus_schedule_cache"));
-      if (cache && cache.semesterStartMonday) {
-        return formatWeek(cache.semesterStartMonday);
-      }
-    } catch (e) {}
-    // 无缓存，异步获取
+    var cache = getScheduleCache();
+    if (cache && cache.semesterStartMonday) {
+      return formatWeek(cache.semesterStartMonday);
+    }
     fetchWeekAsync();
     return "";
   }
@@ -255,18 +303,23 @@
   }
 
   function fetchWeekAsync() {
+    if (_scheduleFetchPending) return;
+    _scheduleFetchPending = true;
     // 通过 postMessage -> bridge -> background 获取
     var reqId = "week-" + Date.now();
+    var timeoutId = null;
     function handler(event) {
       if (event.source !== window) return;
       if (!event.data || event.data.type !== "pp-schedule-response") return;
       if (event.data.reqId !== reqId) return;
       window.removeEventListener("message", handler);
+      if (timeoutId) clearTimeout(timeoutId);
+      _scheduleFetchPending = false;
       var resp = event.data.data;
       if (!resp || resp.error) return;
-      var obj = {timestamp: Date.now(), courses: resp.courses, termName: resp.termName};
+      var obj = {timestamp: Date.now(), courses: resp.courses, termCode: resp.termCode, termName: resp.termName};
       if (resp.semesterStartMonday) obj.semesterStartMonday = resp.semesterStartMonday;
-      localStorage.setItem("potatoplus_schedule_cache", JSON.stringify(obj));
+      localStorage.setItem(SCHEDULE_CACHE_KEY, JSON.stringify(obj));
       if (resp.semesterStartMonday) {
         var el = document.querySelector(".pp-menu-week");
         if (el) el.textContent = formatWeek(resp.semesterStartMonday);
@@ -278,6 +331,10 @@
     }
     window.addEventListener("message", handler);
     window.postMessage({type: "pp-schedule-request", reqId: reqId, force: false}, "*");
+    timeoutId = setTimeout(function () {
+      window.removeEventListener("message", handler);
+      _scheduleFetchPending = false;
+    }, 30000);
   }
 
   function buildCards() {

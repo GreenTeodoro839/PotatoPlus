@@ -94,6 +94,7 @@ async function handleScheduleFetch(msg) {
 
   return {
     courses: courses,
+    termCode: termCode,
     termName: termName,
     semesterStartMonday: semesterStartMonday,
   };
