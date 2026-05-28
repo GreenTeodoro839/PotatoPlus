@@ -51,7 +51,7 @@ const pjw = {
     else    $(".pjw-xk-welcome-card")?.hide();
     return on;
   },
-  UPDATE_URL: "https://github.com/GreenTeodoro839/PotatoPlus/releases/latest",
+  UPDATE_URL: "https://potatoplus.zcec.top/#install",
   // Compare a remote version string against the running version (both may have a leading "v")
   isUpdateAvailable: function(latest) {
     if (!latest || !pjw.version) return false;

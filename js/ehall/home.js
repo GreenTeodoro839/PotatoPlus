@@ -316,7 +316,7 @@
       </div>
       <div class="pp-welcome-spacer"></div>
       <div class="pp-welcome-links">
-        <a href="https://potatoplus.zcec.top/potatoplus" target="_blank">PotatoPlus ${version ? "v" + version : ""}</a>
+        <a href="https://potatoplus.zcec.top" target="_blank">PotatoPlus ${version ? "v" + version : ""}</a>
         <a href="https://github.com/GreenTeodoro839/PotatoPlus" target="_blank">GitHub</a>
         <a href="https://potatoplus.zcec.top/potato-mailing-list/" target="_blank">加入邮件列表</a>
       </div>

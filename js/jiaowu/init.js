@@ -57,7 +57,7 @@ window.potatojw_intl = function() {
     }
     
     if ($$("div#TopLink").length > 0) {
-      $$("div#TopLink").html(`<span class="pjw-mini-button" onclick="window.open('https://potatoplus.zcec.top/potatoplus')">v${pjw.version}</span>`);
+      $$("div#TopLink").html(`<span class="pjw-mini-button" onclick="window.open('https://potatoplus.zcec.top')">v${pjw.version}</span>`);
     }
   }
 
