@@ -12,32 +12,19 @@
 //      cross-entropy; return the 4 click points in title order.
 //
 // Two q8-quantized TinyCNNs (xk_captcha_upper_*, xk_captcha_title_*) live in
-// ../../models/ and use the same format as authserver_captcha.
+// ../../models/. CNN primitives + model loading come from js/common/tinycnn.js.
 
 class XKCaptchaSolver {
   constructor(upper, title) {
-    this.upper = upper;   // {meta, qWeights, biases, cache}
+    this.upper = upper;   // tinycnn model: {meta, qWeights, biases, cache, tensor}
     this.title = title;
   }
 
   static async create(baseUrl = "") {
     const prefix = baseUrl ? baseUrl.replace(/\/$/, "") + "/" : "";
-
-    async function loadModel(name) {
-      const meta = await fetch(prefix + `${name}_model.json`).then(r => r.json());
-      const qBuf = await fetch(prefix + (meta.quantization?.weights_file || `${name}_weights_q8.bin`)).then(r => r.arrayBuffer());
-      const bBuf = await fetch(prefix + (meta.quantization?.biases_file || `${name}_biases_f32.bin`)).then(r => r.arrayBuffer());
-      return {
-        meta,
-        qWeights: new Int8Array(qBuf),
-        biases: new Float32Array(bBuf),
-        cache: new Map(),
-      };
-    }
-
     const [upper, title] = await Promise.all([
-      loadModel("xk_captcha_upper"),
-      loadModel("xk_captcha_title"),
+      pjwTinycnn.loadModel(prefix, "xk_captcha_upper"),
+      pjwTinycnn.loadModel(prefix, "xk_captcha_title"),
     ]);
     if (upper.meta.num_classes !== title.meta.num_classes ||
         upper.meta.classes.length !== title.meta.classes.length) {
@@ -47,15 +34,14 @@ class XKCaptchaSolver {
   }
 
   warmup() {
-    for (const m of [this.upper, this.title]) {
-      for (const n of Object.keys(m.meta.tensors)) xkTensor(m, n);
-    }
+    pjwTinycnn.warmupModel(this.upper);
+    pjwTinycnn.warmupModel(this.title);
   }
 
   async solve(imgEl) {
     const meta = this.upper.meta;
     const W = meta.img_w | 0, H = meta.img_h | 0;
-    const imageData = xkImageToImageData(imgEl, W, H);
+    const imageData = pjwTinycnn.imageToImageData(imgEl, W, H);
 
     const regions = xkFindUpperRegions(imageData, meta.upper_crop?.upper_area_height ?? 100);
     if (regions.length < 4) throw new Error("Failed to segment/match characters");
@@ -85,20 +71,6 @@ class XKCaptchaSolver {
     }
     return points;
   }
-}
-
-
-// ---------------------------------------------------------------------------
-// image → ImageData
-// ---------------------------------------------------------------------------
-
-function xkImageToImageData(imgEl, w, h) {
-  const canvas = typeof OffscreenCanvas !== "undefined"
-    ? new OffscreenCanvas(w, h)
-    : Object.assign(document.createElement("canvas"), { width: w, height: h });
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  ctx.drawImage(imgEl, 0, 0, w, h);
-  return ctx.getImageData(0, 0, w, h);
 }
 
 
@@ -310,134 +282,27 @@ function xkCropTitle(imageData, index, xCenters) {
 
 
 // ---------------------------------------------------------------------------
-// Q8 tensor materialization and CNN ops (mirrors authserver_captcha.js).
+// Classifier forward pass. CNN primitives come from js/common/tinycnn.js.
 // ---------------------------------------------------------------------------
 
-function xkTensor(m, name) {
-  if (m.cache.has(name)) return m.cache.get(name);
-  const t = m.meta.tensors[name];
-  if (!t) throw new Error(`xk_ocr: missing tensor ${name}`);
-  let out;
-  if (t.dtype === "qint8") {
-    const src = m.qWeights.subarray(t.offset, t.offset + t.length);
-    out = new Float32Array(t.length);
-    for (let i = 0; i < src.length; i++) out[i] = src[i] * t.scale;
-  } else if (t.dtype === "float32") {
-    out = m.biases.subarray(t.offset, t.offset + t.length);
-  } else {
-    throw new Error(`xk_ocr: unsupported dtype ${t.dtype}`);
-  }
-  m.cache.set(name, out);
-  return out;
-}
-
-function xkPreprocessRgb(src, w, h, mean, std) {
-  // Source is RGB uint8 in HWC. Output is CHW float32, normalized.
-  const data = src.data;
-  const out = new Float32Array(3 * w * h);
-  const plane = w * h;
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const si = (y * w + x) * 3;
-      const idx = y * w + x;
-      out[idx]            = ((data[si]     / 255.0) - mean[0]) / std[0];
-      out[plane + idx]    = ((data[si + 1] / 255.0) - mean[1]) / std[1];
-      out[2 * plane + idx] = ((data[si + 2] / 255.0) - mean[2]) / std[2];
-    }
-  }
-  return out;
-}
-
-function xkConv2dSame(input, inC, inH, inW, weight, bias, outC, k, pad) {
-  const outH = inH, outW = inW;
-  const out = new Float32Array(outC * outH * outW);
-  for (let oc = 0; oc < outC; oc++) {
-    const b = bias[oc];
-    for (let oy = 0; oy < outH; oy++) {
-      for (let ox = 0; ox < outW; ox++) {
-        let sum = b;
-        for (let ic = 0; ic < inC; ic++) {
-          for (let ky = 0; ky < k; ky++) {
-            const iy = oy + ky - pad;
-            if (iy < 0 || iy >= inH) continue;
-            for (let kx = 0; kx < k; kx++) {
-              const ix = ox + kx - pad;
-              if (ix < 0 || ix >= inW) continue;
-              const wi = (((oc * inC + ic) * k + ky) * k + kx);
-              const ii = (ic * inH + iy) * inW + ix;
-              sum += input[ii] * weight[wi];
-            }
-          }
-        }
-        out[(oc * outH + oy) * outW + ox] = sum;
-      }
-    }
-  }
-  return out;
-}
-
-function xkMaxPool2(input, c, h, w) {
-  const outH = h >> 1, outW = w >> 1;
-  const out = new Float32Array(c * outH * outW);
-  for (let ch = 0; ch < c; ch++) {
-    for (let oy = 0; oy < outH; oy++) {
-      for (let ox = 0; ox < outW; ox++) {
-        const iy = oy * 2, ix = ox * 2;
-        const a = input[(ch * h + iy) * w + ix];
-        const b = input[(ch * h + iy) * w + ix + 1];
-        const cc = input[(ch * h + iy + 1) * w + ix];
-        const d = input[(ch * h + iy + 1) * w + ix + 1];
-        let mx = a; if (b > mx) mx = b; if (cc > mx) mx = cc; if (d > mx) mx = d;
-        out[(ch * outH + oy) * outW + ox] = mx;
-      }
-    }
-  }
-  return out;
-}
-
-function xkLinear(input, weight, bias, outFeatures) {
-  const inFeatures = input.length;
-  const out = new Float32Array(outFeatures);
-  for (let o = 0; o < outFeatures; o++) {
-    let sum = bias[o];
-    const base = o * inFeatures;
-    for (let i = 0; i < inFeatures; i++) sum += input[i] * weight[base + i];
-    out[o] = sum;
-  }
-  return out;
-}
-
-function xkRelu(x) {
-  for (let i = 0; i < x.length; i++) if (x[i] < 0) x[i] = 0;
-  return x;
-}
-
 function xkClassify(model, crop) {
+  const { preprocessRgb, conv2dSame, maxPool2d, linear, relu } = pjwTinycnn;
   const meta = model.meta;
   const size = meta.input_size;
   const channels = meta.channels;
   const hidden = meta.hidden;
-  let x = xkPreprocessRgb(crop, size, size, meta.rgb_mean, meta.rgb_std);
-  x = xkRelu(xkConv2dSame(x, 3, size, size,
-        xkTensor(model, "conv1.weight"), xkTensor(model, "conv1.bias"),
-        channels[0], 3, 1));
-  x = xkMaxPool2(x, channels[0], size, size);
+  const t = (n) => model.tensor(n);
+  let x = preprocessRgb(crop, size, size, meta.rgb_mean, meta.rgb_std, 3); // RGB crop
+  x = relu(conv2dSame(x, 3, size, size, t("conv1.weight"), t("conv1.bias"), channels[0], 3, 1));
+  x = maxPool2d(x, channels[0], size, size, 2);
   let h = size >> 1, w = size >> 1;
-  x = xkRelu(xkConv2dSame(x, channels[0], h, w,
-        xkTensor(model, "conv2.weight"), xkTensor(model, "conv2.bias"),
-        channels[1], 3, 1));
-  x = xkMaxPool2(x, channels[1], h, w);
+  x = relu(conv2dSame(x, channels[0], h, w, t("conv2.weight"), t("conv2.bias"), channels[1], 3, 1));
+  x = maxPool2d(x, channels[1], h, w, 2);
   h >>= 1; w >>= 1;
-  x = xkRelu(xkConv2dSame(x, channels[1], h, w,
-        xkTensor(model, "conv3.weight"), xkTensor(model, "conv3.bias"),
-        channels[2], 3, 1));
-  x = xkMaxPool2(x, channels[2], h, w);
-  x = xkRelu(xkLinear(x,
-        xkTensor(model, "fc1.weight"), xkTensor(model, "fc1.bias"),
-        hidden));
-  x = xkLinear(x,
-        xkTensor(model, "fc2.weight"), xkTensor(model, "fc2.bias"),
-        meta.num_classes);
+  x = relu(conv2dSame(x, channels[1], h, w, t("conv3.weight"), t("conv3.bias"), channels[2], 3, 1));
+  x = maxPool2d(x, channels[2], h, w, 2);
+  x = relu(linear(x, t("fc1.weight"), t("fc1.bias"), hidden));
+  x = linear(x, t("fc2.weight"), t("fc2.bias"), meta.num_classes);
   return x;
 }
 
@@ -480,18 +345,13 @@ function xkBestAssignment4(cost) {
 // Lazy singleton for the welcome page to pick up.
 // ---------------------------------------------------------------------------
 
-const PJW_XK_MODEL_BASE_URL = (() => {
-  const scriptEl = document.currentScript;
-  if (!scriptEl || !scriptEl.src) return "";
-  return new URL("../../models/", scriptEl.src).toString();
-})();
-
 let pjwXKCaptchaSolverPromise = null;
 
 function getPjwXKCaptchaSolver() {
-  if (!PJW_XK_MODEL_BASE_URL) throw new Error("Local captcha model URL is unavailable");
+  const baseUrl = pjwTinycnn.modelsBaseUrl();
+  if (!baseUrl) throw new Error("Local captcha model URL is unavailable");
   if (!pjwXKCaptchaSolverPromise) {
-    pjwXKCaptchaSolverPromise = XKCaptchaSolver.create(PJW_XK_MODEL_BASE_URL);
+    pjwXKCaptchaSolverPromise = XKCaptchaSolver.create(baseUrl);
   }
   return pjwXKCaptchaSolverPromise;
 }

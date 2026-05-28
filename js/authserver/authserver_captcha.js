@@ -1,159 +1,43 @@
+// CNN primitives + model loading live in js/common/tinycnn.js.
+
 class AuthserverCaptchaOCR {
-  constructor(meta, qWeights, f32Biases) {
-    this.meta = meta;
-    this.qWeights = qWeights;
-    this.f32Biases = f32Biases;
-    this.cache = new Map();
-    this.charset = meta.charset;
-    this.imgW = meta.img_w;
-    this.imgH = meta.img_h;
-    this.mean = meta.rgb_mean || [0.7336, 0.7450, 0.7780];
-    this.std = meta.rgb_std || [0.3062, 0.3100, 0.3177];
+  constructor(model) {
+    this.model = model;
+    this.charset = model.meta.charset;
+    this.imgW = model.meta.img_w;
+    this.imgH = model.meta.img_h;
+    this.mean = model.meta.rgb_mean || [0.7336, 0.7450, 0.7780];
+    this.std = model.meta.rgb_std || [0.3062, 0.3100, 0.3177];
   }
 
   static async create(baseUrl = "") {
     const prefix = baseUrl ? baseUrl.replace(/\/$/, "") + "/" : "";
-    const meta = await fetch(prefix + "authserver_captcha_model.json").then(r => r.json());
-    const qBuf = await fetch(prefix + (meta.quantization?.weights_file || "authserver_captcha_weights_q8.bin")).then(r => r.arrayBuffer());
-    const bBuf = await fetch(prefix + (meta.quantization?.biases_file || "authserver_captcha_biases_f32.bin")).then(r => r.arrayBuffer());
-    return new AuthserverCaptchaOCR(meta, new Int8Array(qBuf), new Float32Array(bBuf));
+    const model = await pjwTinycnn.loadModel(prefix, "authserver_captcha");
+    return new AuthserverCaptchaOCR(model);
   }
 
-  tensor(name) {
-    if (this.cache.has(name)) return this.cache.get(name);
-    const m = this.meta.tensors[name];
-    if (!m) throw new Error(`Missing tensor: ${name}`);
-
-    let out;
-    if (m.dtype === "qint8") {
-      const src = this.qWeights.subarray(m.offset, m.offset + m.length);
-      out = new Float32Array(m.length);
-      for (let i = 0; i < src.length; i++) out[i] = src[i] * m.scale;
-    } else if (m.dtype === "float32") {
-      out = this.f32Biases.subarray(m.offset, m.offset + m.length);
-    } else {
-      throw new Error(`Unsupported tensor dtype for ${name}: ${m.dtype}`);
-    }
-
-    this.cache.set(name, out);
-    return out;
-  }
-
-  warmup() {
-    for (const name of Object.keys(this.meta.tensors)) this.tensor(name);
-  }
+  warmup() { pjwTinycnn.warmupModel(this.model); }
 
   async predictFromImageElement(img) {
-    const imageData = authserverCaptchaImageToImageData(img, this.imgW, this.imgH);
+    const imageData = pjwTinycnn.imageToImageData(img, this.imgW, this.imgH);
     return this.predictFromImageData(imageData);
   }
 
   predictFromImageData(imageData) {
-    let x = authserverCaptchaPreprocessRgb(imageData, this.imgW, this.imgH, this.mean, this.std);
-    x = authserverCaptchaRelu(authserverCaptchaConv2dSame(x, 3, this.imgH, this.imgW, this.tensor("conv1.weight"), this.tensor("conv1.bias"), 16, 3, 1));
-    x = authserverCaptchaMaxPool2d(x, 16, 30, 80, 2);
-    x = authserverCaptchaRelu(authserverCaptchaConv2dSame(x, 16, 15, 40, this.tensor("conv2.weight"), this.tensor("conv2.bias"), 32, 3, 1));
-    x = authserverCaptchaMaxPool2d(x, 32, 15, 40, 2);
-    x = authserverCaptchaRelu(authserverCaptchaConv2dSame(x, 32, 7, 20, this.tensor("conv3.weight"), this.tensor("conv3.bias"), 64, 3, 1));
-    x = authserverCaptchaMaxPool2d(x, 64, 7, 20, 2);
-    x = authserverCaptchaRelu(authserverCaptchaLinear(x, this.tensor("fc1.weight"), this.tensor("fc1.bias"), 256));
-    x = authserverCaptchaLinear(x, this.tensor("fc2.weight"), this.tensor("fc2.bias"), this.meta.num_chars * this.meta.num_classes);
-    return authserverCaptchaDecode(x, this.charset, this.meta.num_chars, this.meta.num_classes);
+    const { preprocessRgb, conv2dSame, maxPool2d, linear, relu } = pjwTinycnn;
+    const t = (n) => this.model.tensor(n);
+    const W = this.imgW, H = this.imgH;
+    let x = preprocessRgb(imageData, W, H, this.mean, this.std, 4); // RGBA from canvas
+    x = relu(conv2dSame(x, 3, H, W, t("conv1.weight"), t("conv1.bias"), 16, 3, 1));
+    x = maxPool2d(x, 16, H, W, 2);
+    x = relu(conv2dSame(x, 16, H >> 1, W >> 1, t("conv2.weight"), t("conv2.bias"), 32, 3, 1));
+    x = maxPool2d(x, 32, H >> 1, W >> 1, 2);
+    x = relu(conv2dSame(x, 32, H >> 2, W >> 2, t("conv3.weight"), t("conv3.bias"), 64, 3, 1));
+    x = maxPool2d(x, 64, H >> 2, W >> 2, 2);
+    x = relu(linear(x, t("fc1.weight"), t("fc1.bias"), 256));
+    x = linear(x, t("fc2.weight"), t("fc2.bias"), this.model.meta.num_chars * this.model.meta.num_classes);
+    return authserverCaptchaDecode(x, this.charset, this.model.meta.num_chars, this.model.meta.num_classes);
   }
-}
-
-function authserverCaptchaImageToImageData(img, width = 80, height = 30) {
-  const canvas = typeof OffscreenCanvas !== "undefined"
-    ? new OffscreenCanvas(width, height)
-    : Object.assign(document.createElement("canvas"), { width, height });
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  ctx.drawImage(img, 0, 0, width, height);
-  return ctx.getImageData(0, 0, width, height);
-}
-
-function authserverCaptchaPreprocessRgb(imageData, width = 80, height = 30, mean, std) {
-  const src = imageData.data;
-  const out = new Float32Array(3 * width * height);
-  const plane = width * height;
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const si = (y * width + x) * 4;
-      const idx = y * width + x;
-      out[idx] = ((src[si] / 255.0) - mean[0]) / std[0];
-      out[plane + idx] = ((src[si + 1] / 255.0) - mean[1]) / std[1];
-      out[2 * plane + idx] = ((src[si + 2] / 255.0) - mean[2]) / std[2];
-    }
-  }
-  return out;
-}
-
-function authserverCaptchaConv2dSame(input, inC, inH, inW, weight, bias, outC, k, pad) {
-  const outH = inH;
-  const outW = inW;
-  const out = new Float32Array(outC * outH * outW);
-  for (let oc = 0; oc < outC; oc++) {
-    const b = bias[oc];
-    for (let oy = 0; oy < outH; oy++) {
-      for (let ox = 0; ox < outW; ox++) {
-        let sum = b;
-        for (let ic = 0; ic < inC; ic++) {
-          for (let ky = 0; ky < k; ky++) {
-            const iy = oy + ky - pad;
-            if (iy < 0 || iy >= inH) continue;
-            for (let kx = 0; kx < k; kx++) {
-              const ix = ox + kx - pad;
-              if (ix < 0 || ix >= inW) continue;
-              const wi = (((oc * inC + ic) * k + ky) * k + kx);
-              const ii = (ic * inH + iy) * inW + ix;
-              sum += input[ii] * weight[wi];
-            }
-          }
-        }
-        out[(oc * outH + oy) * outW + ox] = sum;
-      }
-    }
-  }
-  return out;
-}
-
-function authserverCaptchaMaxPool2d(input, c, h, w, size) {
-  const outH = Math.floor(h / size);
-  const outW = Math.floor(w / size);
-  const out = new Float32Array(c * outH * outW);
-  for (let ch = 0; ch < c; ch++) {
-    for (let oy = 0; oy < outH; oy++) {
-      for (let ox = 0; ox < outW; ox++) {
-        let m = -Infinity;
-        for (let ky = 0; ky < size; ky++) {
-          for (let kx = 0; kx < size; kx++) {
-            const iy = oy * size + ky;
-            const ix = ox * size + kx;
-            const v = input[(ch * h + iy) * w + ix];
-            if (v > m) m = v;
-          }
-        }
-        out[(ch * outH + oy) * outW + ox] = m;
-      }
-    }
-  }
-  return out;
-}
-
-function authserverCaptchaLinear(input, weight, bias, outFeatures) {
-  const inFeatures = input.length;
-  const out = new Float32Array(outFeatures);
-  for (let o = 0; o < outFeatures; o++) {
-    let sum = bias[o];
-    const base = o * inFeatures;
-    for (let i = 0; i < inFeatures; i++) sum += input[i] * weight[base + i];
-    out[o] = sum;
-  }
-  return out;
-}
-
-function authserverCaptchaRelu(x) {
-  for (let i = 0; i < x.length; i++) if (x[i] < 0) x[i] = 0;
-  return x;
 }
 
 function authserverCaptchaDecode(logits, charset, positions, classes) {
@@ -173,21 +57,50 @@ function authserverCaptchaDecode(logits, charset, positions, classes) {
   return text;
 }
 
-const PJW_AUTH_CAPTCHA_MODEL_BASE_URL = (() => {
-  const scriptEl = document.currentScript;
-  if (!scriptEl || !scriptEl.src) return "";
-  return new URL("../../models/", scriptEl.src).toString();
-})();
-
 let pjwAuthserverCaptchaOcrPromise = null;
 
 function getPjwAuthserverCaptchaOcr() {
-  if (!PJW_AUTH_CAPTCHA_MODEL_BASE_URL) throw new Error("Local captcha model URL is unavailable");
+  const baseUrl = pjwTinycnn.modelsBaseUrl();
+  if (!baseUrl) throw new Error("Local captcha model URL is unavailable");
   if (!pjwAuthserverCaptchaOcrPromise) {
-    pjwAuthserverCaptchaOcrPromise = AuthserverCaptchaOCR.create(PJW_AUTH_CAPTCHA_MODEL_BASE_URL);
+    pjwAuthserverCaptchaOcrPromise = AuthserverCaptchaOCR.create(baseUrl);
   }
   return pjwAuthserverCaptchaOcrPromise;
 }
+
+// Watches the authserver captcha <img> for appearance + src changes, invoking
+// onChange(img) once per (img, src) after the image has loaded. Shared by the
+// hijack overlay (login.js) and the inline toggle (initAuthserver below).
+function pjwAuthserverWatchCaptchaImg(getImg, onChange) {
+  let currentImg = null;
+  let lastSrc = "";
+
+  function fire(img) {
+    const src = img.getAttribute("src") || "";
+    if (!src || src === lastSrc) return;
+    lastSrc = src;
+    if (img.complete && img.naturalWidth > 0) onChange(img);
+    else img.addEventListener("load", () => onChange(img), { once: true });
+  }
+
+  function attach(img) {
+    if (img === currentImg) return;
+    currentImg = img;
+    new MutationObserver(() => fire(img))
+      .observe(img, { attributes: true, attributeFilter: ["src"] });
+    img.addEventListener("load", () => fire(img));
+    fire(img);
+  }
+
+  function check() {
+    const img = getImg();
+    if (img) attach(img);
+  }
+
+  check();
+  new MutationObserver(check).observe(document.body, { childList: true, subtree: true });
+}
+window.pjwAuthserverWatchCaptchaImg = pjwAuthserverWatchCaptchaImg;
 
 function initAuthserver() {
   console.log("[PotatoPlus] initAuthserver() called");
@@ -276,13 +189,13 @@ function initAuthserver() {
   // --- Captcha solving ---
   let _solvingCaptcha = false;
 
-  async function solveAuthserverCaptcha() {
+  async function solveAuthserverCaptcha(imgEl) {
     if (!pjw.isOn("authserver_solve_captcha")) return;
-    const imgEl = document.querySelector(".login-main #captchaImg") || document.getElementById("captchaImg");
+    imgEl = imgEl || document.querySelector(".login-main #captchaImg") || document.getElementById("captchaImg");
     if (!imgEl) return;
     if (_solvingCaptcha) return;
     if (!imgEl.complete || imgEl.naturalWidth === 0) {
-      imgEl.addEventListener("load", () => solveAuthserverCaptcha(), { once: true });
+      imgEl.addEventListener("load", () => solveAuthserverCaptcha(imgEl), { once: true });
       return;
     }
     _solvingCaptcha = true;
@@ -320,55 +233,10 @@ function initAuthserver() {
     if (pjw._authserverCaptchaInitialized) return;
     pjw._authserverCaptchaInitialized = true;
 
-    let currentImgEl = null;
-    let imgAttrObserver = null;
-    let lastSolvedSrc = "";
-
-    function onNewSrc(imgEl) {
-      if (!pjw.isOn("authserver_solve_captcha")) return;
-      const src = imgEl.getAttribute("src") || "";
-      if (!src || src === lastSolvedSrc) return;
-      lastSolvedSrc = src;
-      console.log("[PotatoPlus] captchaImg new src detected");
-      if (imgEl.complete && imgEl.naturalWidth > 0) {
-        solveAuthserverCaptcha();
-      } else {
-        imgEl.addEventListener("load", () => solveAuthserverCaptcha(), { once: true });
-      }
-    }
-
-    function attachToImg(imgEl) {
-      if (imgEl === currentImgEl) return;
-      console.log("[PotatoPlus] attaching to captchaImg element");
-      if (imgAttrObserver) imgAttrObserver.disconnect();
-      currentImgEl = imgEl;
-
-      imgAttrObserver = new MutationObserver(function(mutations) {
-        for (const m of mutations) {
-          if (m.attributeName === "src") onNewSrc(imgEl);
-        }
-      });
-      imgAttrObserver.observe(imgEl, { attributes: true, attributeFilter: ["src"] });
-
-      imgEl.addEventListener("load", function() {
-        const src = imgEl.getAttribute("src") || "";
-        if (src && src !== lastSolvedSrc) {
-          lastSolvedSrc = src;
-          solveAuthserverCaptcha();
-        }
-      });
-
-      onNewSrc(imgEl);
-    }
-
-    const bodyObserver = new MutationObserver(function() {
-      const imgEl = document.querySelector(".login-main #captchaImg") || document.getElementById("captchaImg");
-      if (imgEl && imgEl !== currentImgEl) attachToImg(imgEl);
-    });
-    bodyObserver.observe(document.body, { childList: true, subtree: true });
-
-    const imgEl = document.querySelector(".login-main #captchaImg") || document.getElementById("captchaImg");
-    if (imgEl) attachToImg(imgEl);
+    pjwAuthserverWatchCaptchaImg(
+      () => document.querySelector(".login-main #captchaImg") || document.getElementById("captchaImg"),
+      (imgEl) => solveAuthserverCaptcha(imgEl)
+    );
   }
 
   // Auto-start if preference is enabled

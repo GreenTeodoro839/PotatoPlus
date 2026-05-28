@@ -5,10 +5,6 @@ pjw._authserverHijackActive = pjw.isOn("authserver_hijack");
 (function () {
   "use strict";
 
-  const PJW_STORAGE = "potatoplus_data";
-  function pjwData() { try { return JSON.parse(localStorage.getItem(PJW_STORAGE)) || {}; } catch { return {}; } }
-  function pjwSave(obj) { localStorage.setItem(PJW_STORAGE, JSON.stringify(obj)); }
-
   if (!pjw.isOn("authserver_hijack")) return;
 
   // --- 注入样式 ---
@@ -139,9 +135,8 @@ pjw._authserverHijackActive = pjw.isOn("authserver_hijack");
   function init() {
     const metaEl  = document.querySelector('meta[name="pjw"]');
     const version = metaEl ? (metaEl.getAttribute("version") || "") : "";
-    const stored   = pjwData();
-    const savedUser = stored.as_username || "";
-    const savedPass = stored.as_password || "";
+    const savedUser = pjw.data.as_username || "";
+    const savedPass = pjw.data.as_password || "";
     const hasSaved  = !!(savedUser || savedPass);
 
     // QR code SVG icon
@@ -356,10 +351,13 @@ pjw._authserverHijackActive = pjw.isOn("authserver_hijack");
       submitEl.textContent = "\u767b\u5f55\u4e2d\u2026";
 
       // 保存凭据
-      var d = pjwData();
-      if (saveEl.checked) { d.as_username = username; d.as_password = password; }
-      else { delete d.as_username; delete d.as_password; }
-      pjwSave(d);
+      if (saveEl.checked) {
+        pjw.data.as_username = username;
+        pjw.data.as_password = password;
+      } else {
+        delete pjw.data.as_username;
+        delete pjw.data.as_password;
+      }
 
       // 填入原始表单
       var origUser    = document.getElementById("username");
@@ -439,40 +437,12 @@ pjw._authserverHijackActive = pjw.isOn("authserver_hijack");
     function initCaptchaSolver() {
       if (_captchaInited) return;
       _captchaInited = true;
-
-      var lastSrc = "";
-      var currentImg = null;
-
-      function onNewSrc(imgEl) {
-        if (!pjw.isOn("authserver_solve_captcha")) return;
-        var src = imgEl.getAttribute("src") || "";
-        if (!src || src === lastSrc) return;
-        lastSrc = src;
-        if (imgEl.complete && imgEl.naturalWidth > 0) solveCaptcha(imgEl);
-        else imgEl.addEventListener("load", function() { solveCaptcha(imgEl); }, { once: true });
-      }
-
-      function attachImg(imgEl) {
-        if (imgEl === currentImg) return;
-        currentImg = imgEl;
-        var obs = new MutationObserver(function() { onNewSrc(imgEl); });
-        obs.observe(imgEl, { attributes: true, attributeFilter: ["src"] });
-        imgEl.addEventListener("load", function() {
-          var src = imgEl.getAttribute("src") || "";
-          if (src && src !== lastSrc) { lastSrc = src; solveCaptcha(imgEl); }
-        });
-        onNewSrc(imgEl);
-      }
-
-      // 直接用 _mainCaptchaImg（已由 watchLoginMainCaptcha 设置）
-      if (_mainCaptchaImg) {
-        attachImg(_mainCaptchaImg);
-      } else {
-        var waitObs = new MutationObserver(function() {
-          if (_mainCaptchaImg) { waitObs.disconnect(); attachImg(_mainCaptchaImg); }
-        });
-        waitObs.observe(document.body, { childList: true, subtree: true });
-      }
+      // _mainCaptchaImg is set by watchLoginMainCaptcha once .login-main #captchaImg
+      // has a src; the shared watcher handles appearance + src-change lifecycle.
+      pjwAuthserverWatchCaptchaImg(
+        function() { return _mainCaptchaImg; },
+        function(imgEl) { solveCaptcha(imgEl); }
+      );
     }
 
     async function solveCaptcha(imgEl) {

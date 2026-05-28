@@ -1,6 +1,8 @@
 // background.js - PotatoPlus Service Worker
 // 处理需要绕过 CORS 的请求（课表 API 等）
 
+importScripts("./common/term.js");
+
 if (!globalThis.browser) globalThis.browser = globalThis.chrome;
 
 browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
@@ -13,8 +15,6 @@ browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 });
 
 async function handleScheduleFetch(msg) {
-  var force = msg.force || false;
-
   // 0. 检查 ehall 登录状态
   var loginResp = await fetch(
     "https://ehall.nju.edu.cn/jsonp/ywtb/info/getUserInfoAndSchoolInfo",
@@ -47,8 +47,8 @@ async function handleScheduleFetch(msg) {
   var termData = await termResp.json();
   var rows = (termData.datas && (termData.datas.xnxqcx || termData.datas.jshkcb || {}).rows) || null;
   if (!rows || !rows.length) throw new Error("学期列表为空");
-  var term = selectCurrentTerm(rows, new Date());
-  var termCode = getTermCode(term);
+  var term = pjwTerm.selectCurrentTerm(rows, new Date());
+  var termCode = pjwTerm.getTermCode(term);
   var termName = term.MC || term.XNXQDM_DISPLAY || termCode;
 
   // 3. 获取课表
@@ -98,89 +98,6 @@ async function handleScheduleFetch(msg) {
     termName: termName,
     semesterStartMonday: semesterStartMonday,
   };
-}
-
-function selectCurrentTerm(rows, now) {
-  var today = toDateOnly(now || new Date());
-  var sortedRows = rows.slice().sort(function (a, b) {
-    return (a.PX || 0) - (b.PX || 0);
-  });
-
-  for (var i = 0; i < sortedRows.length; i++) {
-    var explicitRange = getExplicitTermRange(sortedRows[i]);
-    if (explicitRange && isInDateRange(today, explicitRange)) return sortedRows[i];
-  }
-
-  for (var j = 0; j < sortedRows.length; j++) {
-    var inferredRange = getInferredTermRange(sortedRows[j]);
-    if (inferredRange && isInDateRange(today, inferredRange)) return sortedRows[j];
-  }
-
-  return sortedRows[0];
-}
-
-function getTermCode(row) {
-  if (!row) return "";
-  if (row.DM) return String(row.DM);
-  if (row.XNXQDM) return String(row.XNXQDM);
-  if (row.XNDM && row.XQDM) return String(row.XNDM) + "-" + String(row.XQDM);
-  return "";
-}
-
-function getExplicitTermRange(row) {
-  var start = parseTermDate(row && row.QSSYRQ);
-  var end = parseTermDate(row && row.ZZSYRQ);
-  if (!start && !end) return null;
-  return {
-    start: start,
-    end: end ? addDays(end, 1) : null,
-  };
-}
-
-function getInferredTermRange(row) {
-  var code = getTermCode(row);
-  var match = code.match(/^(\d{4})-(\d{4})-([123])$/);
-  var yearStart = match ? parseInt(match[1], 10) : null;
-  var yearEnd = match ? parseInt(match[2], 10) : null;
-  var termNo = match ? parseInt(match[3], 10) : parseInt(row && row.XQDM, 10);
-
-  if ((!yearStart || !yearEnd) && row && row.XNDM) {
-    var yearMatch = String(row.XNDM).match(/^(\d{4})-(\d{4})$/);
-    if (yearMatch) {
-      yearStart = parseInt(yearMatch[1], 10);
-      yearEnd = parseInt(yearMatch[2], 10);
-    }
-  }
-
-  if (!yearStart || !yearEnd || !termNo) return null;
-  if (termNo === 1) return { start: new Date(yearStart, 8, 1), end: new Date(yearEnd, 1, 1) };
-  if (termNo === 2) return { start: new Date(yearEnd, 1, 1), end: new Date(yearEnd, 6, 1) };
-  if (termNo === 3) return { start: new Date(yearEnd, 6, 1), end: new Date(yearEnd, 8, 1) };
-  return null;
-}
-
-function parseTermDate(value) {
-  if (!value) return null;
-  var s = String(value);
-  var m = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
-  if (!m) m = s.match(/^(\d{4})(\d{2})(\d{2})$/);
-  if (!m) return null;
-  var d = new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10));
-  return isNaN(d.getTime()) ? null : d;
-}
-
-function toDateOnly(value) {
-  return new Date(value.getFullYear(), value.getMonth(), value.getDate());
-}
-
-function addDays(date, days) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
-}
-
-function isInDateRange(date, range) {
-  if (range.start && date < range.start) return false;
-  if (range.end && date >= range.end) return false;
-  return true;
 }
 
 function parseWeeks(t, b) {

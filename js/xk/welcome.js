@@ -84,11 +84,6 @@ function initXKWelcome(getBulletin) {
     if (pjw.toggle("solve_captcha")) initCAPTCHASolver();
   });
 
-  // Drop the deprecated remote-server URL preference, if any.
-  if (pjw.data.captcha_solver_link !== null && pjw.data.captcha_solver_link !== undefined) {
-    delete pjw.data.captcha_solver_link;
-  }
-
   function showCaptchaToast(msg, isError) {
     $("#pjw-captcha-toast").remove();
     const toast = $(`<div id="pjw-captcha-toast" class="pjw-captcha-toast ${isError ? 'pjw-captcha-toast-error' : 'pjw-captcha-toast-info'}">${msg}</div>`);

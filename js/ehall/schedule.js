@@ -34,12 +34,10 @@
   function dayDate(wk,dow,start){var d=new Date(monday(new Date(start)));d.setDate(d.getDate()+(wk-1)*7+(dow-1));return d;}
   function ccolor(n){var h=0;for(var i=0;i<n.length;i++){h=((h<<5)-h)+n.charCodeAt(i);h|=0;}return COLORS[Math.abs(h)%COLORS.length];}
 
-  // --- cache ---
+  // --- cache --- (term parsing lives in js/common/term.js)
   function getCache(){try{var c=JSON.parse(localStorage.getItem(CACHE_KEY));return c&&c.timestamp&&c.courses&&cacheMatchesCurrentTerm(c)?c:null;}catch(e){return null;}}
   function setCache(d){var obj={timestamp:Date.now(),courses:d.courses,termCode:d.termCode,termName:d.termName};if(d.semesterStartMonday)obj.semesterStartMonday=d.semesterStartMonday;localStorage.setItem(CACHE_KEY,JSON.stringify(obj));}
-  function cacheMatchesCurrentTerm(c){var code=c.termCode||termCodeFromName(c.termName);return !code||dateInTermCode(new Date(),code);}
-  function termCodeFromName(name){var s=String(name||""),y=s.match(/(\d{4})-(\d{4})/);if(!y)return"";var tail=s.slice(y.index+y[0].length),x=tail.match(/[123]/),term=x?x[0]:(/\u6691/.test(tail)?"3":"");return term?y[1]+"-"+y[2]+"-"+term:"";}
-  function dateInTermCode(date,code){var m=String(code||"").match(/^(\d{4})-(\d{4})-([123])$/);if(!m)return true;var y1=+m[1],y2=+m[2],t=+m[3],start=null,end=null;if(t===1){start=new Date(y1,8,1);end=new Date(y2,1,1);}else if(t===2){start=new Date(y2,1,1);end=new Date(y2,6,1);}else if(t===3){start=new Date(y2,6,1);end=new Date(y2,8,1);}var d=new Date(date.getFullYear(),date.getMonth(),date.getDate());return (!start||d>=start)&&(!end||d<end);}
+  function cacheMatchesCurrentTerm(c){var code=c.termCode||pjwTerm.termCodeFromName(c.termName);return !code||pjwTerm.dateInTermCode(new Date(),code);}
 
   // --- fetch via background (through bridge content script) ---
   var _reqId = 0;
@@ -366,5 +364,15 @@
     document.head.appendChild(s);
   }
 
-  window.ppSchedule={open:openSchedule,close:closeSchedule};
+  // Public API. home.js reuses the cache + background-fetch plumbing so the
+  // schedule card and the modal share one cache key and one bridge protocol.
+  window.ppSchedule={
+    open:openSchedule,
+    close:closeSchedule,
+    getCache:getCache,
+    setCache:setCache,
+    fetch:fetchViaBackground,
+    calcWeek:calcWeek,
+    CACHE_TTL:CACHE_TTL,
+  };
 })();
