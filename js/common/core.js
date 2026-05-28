@@ -51,6 +51,57 @@ const pjw = {
     else    $(".pjw-xk-welcome-card")?.hide();
     return on;
   },
+  UPDATE_URL: "https://github.com/GreenTeodoro839/PotatoPlus/releases/latest",
+  // Compare a remote version string against the running version (both may have a leading "v")
+  isUpdateAvailable: function(latest) {
+    if (!latest || !pjw.version) return false;
+    const a = String(latest).replace(/^v/i, "").split(".").map(Number);
+    const b = String(pjw.version).replace(/^v/i, "").split(".").map(Number);
+    for (let i = 0; i < Math.max(a.length, b.length); i++) {
+      const x = a[i] || 0, y = b[i] || 0;
+      if (x > y) return true;
+      if (x < y) return false;
+    }
+    return false;
+  },
+  // Render/refresh an "update available" notice at the top of the given card container.
+  // Self-healing: removes the notice when no newer version applies or it was dismissed.
+  renderUpdateNotice: function(containerSelector) {
+    const container = document.querySelector(containerSelector);
+    if (!container) return;
+    const latest = pjw.data.latest_version;
+    let notice = container.querySelector(".pjw-update-notice");
+    const show = pjw.isUpdateAvailable(latest) && pjw.data.update_dismissed_version !== latest;
+    if (!show) { if (notice) notice.remove(); return; }
+    if (!notice) {
+      notice = document.createElement("div");
+      notice.className = "pjw-update-notice";
+      notice.style.cssText = "display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:8px 10px;" +
+        "background:rgba(99,6,95,.08);border:1px solid rgba(99,6,95,.25);border-radius:8px;" +
+        "font-size:13px;line-height:1.4;";
+      container.insertBefore(notice, container.firstChild);
+    }
+    notice.textContent = "";
+    const label = document.createElement("span");
+    label.style.flex = "1";
+    label.textContent = "🆕 新版本 v" + latest + " 可用";
+    const link = document.createElement("a");
+    link.href = pjw.UPDATE_URL;
+    link.target = "_blank";
+    link.textContent = "查看更新";
+    link.style.cssText = "color:#63065f;font-weight:bold;text-decoration:none;white-space:nowrap;";
+    const close = document.createElement("span");
+    close.textContent = "✕";
+    close.title = "忽略此版本";
+    close.style.cssText = "cursor:pointer;opacity:.6;padding:0 2px;";
+    close.addEventListener("click", function() {
+      pjw.data.update_dismissed_version = latest;
+      notice.remove();
+    });
+    notice.appendChild(label);
+    notice.appendChild(link);
+    notice.appendChild(close);
+  },
 };
 
 (() => {

@@ -24,24 +24,6 @@ function initXKWelcome(getBulletin) {
 
     <div class="pjw-xk-welcome-subsection">
       <div class="pjw-xk-welcome-option">
-        <button id="pjw-share-usage-data-switch" class="mdc-switch mdc-switch--unselected" type="button" role="switch" aria-checked="false" data-mdc-auto-init="MDCRipple">
-          <div class="mdc-switch__track"></div>
-          <div class="mdc-switch__handle-track">
-            <div class="mdc-switch__handle">
-              <div class="mdc-switch__shadow">
-                <div class="mdc-elevation-overlay"></div>
-              </div>
-              <div class="mdc-switch__ripple"></div>
-            </div>
-          </div>
-          <span class="mdc-switch__focus-ring-wrapper">
-            <div class="mdc-switch__focus-ring"></div>
-          </span>
-        </button>
-        <label for="pjw-share-usage-data-switch">发送匿名统计数据</label>
-      </div>
-
-      <div class="pjw-xk-welcome-option">
         <button id="pjw-solve-captcha-switch" class="mdc-switch mdc-switch--unselected" type="button" role="switch" aria-checked="false" data-mdc-auto-init="MDCRipple">
           <div class="mdc-switch__track"></div>
           <div class="mdc-switch__handle-track">
@@ -71,11 +53,8 @@ function initXKWelcome(getBulletin) {
     else target.hide();
   });
 
-  const share_usage_data_switch = new window.mdc.switchControl.MDCSwitch(document.getElementById("pjw-share-usage-data-switch"));
-  share_usage_data_switch.selected = pjw.isOn("share_usage_data");
   if (!pjw.isOn("enabled"))
     $(".pjw-xk-welcome-subsection").hide();
-  $("#pjw-share-usage-data-switch").on("click", () => { pjw.toggle("share_usage_data"); });
 
   const solve_captcha_switch = new window.mdc.switchControl.MDCSwitch(document.getElementById("pjw-solve-captcha-switch"));
   solve_captcha_switch.selected = pjw.isOn("solve_captcha");
@@ -191,5 +170,6 @@ function initXKWelcome(getBulletin) {
   if (!pjw.isOn("enabled"))
     $(".pjw-xk-welcome-card").hide();
 
+  pjw.renderUpdateNotice(".pjw-xk-welcome-card");
   getBulletin();
 }

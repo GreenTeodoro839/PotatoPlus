@@ -18,20 +18,6 @@ window.potatojw_intl = function() {
   `;
   $$("head").prepend(head_metadata);
 
-  const google_analytics_js = `
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-173014211-1"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'UA-173014211-1', {
-      'custom_map': {'dimension1': 'version'}
-    });
-    gtag('event', 'version_dimension', {'version': pjw.version + " " + pjw.platform});
-    </script>
-  `;
-
   if (pjw.site == "jw") {
     if ($$("#Function").length) {
       $$("#Function").addClass("light");
@@ -73,8 +59,6 @@ window.potatojw_intl = function() {
     if ($$("div#TopLink").length > 0) {
       $$("div#TopLink").html(`<span class="pjw-mini-button" onclick="window.open('https://potatoplus.zcec.top/potatoplus')">v${pjw.version}</span>`);
     }
-  } else if (pjw.site == "xk") {
-    pjw.isOn("enabled") && pjw.isOn("share_usage_data") && $("head").append($(google_analytics_js));
   }
 
   console.log(`PotatoPlus v${pjw.version} (${pjw.platform}) by Limos`);
@@ -178,6 +162,8 @@ window.potatojw_intl = function() {
     }
     delete pjw.data.bulletin_update_timestamp;
     delete pjw.data.bulletin_content;
+    delete pjw.data.latest_version;
+    delete pjw.data.update_dismissed_version;
     pjw.data.version = pjw.version;
   }
 
@@ -188,9 +174,7 @@ window.potatojw_intl = function() {
 
   var getBulletin = function() {
     if ((pjw.data.bulletin_update_timestamp || 0) + 300000 <= new Date().getTime()) {
-      const html = `<iframe src="https://potatoplus.zcec.top/apps/potatoplus-bulletin/?version=${pjw.version}&share_stats=${
-        (pjw.preferences.share_usage_data || pjw.preferences.login_settings?.share_stats) ? 1 : 0
-      }&site=${pjw.site}" width="300" height="300" style="display: none;"></iframe>`;
+      const html = `<iframe src="https://potatoplus.zcec.top/apps/potatoplus-bulletin/?version=${pjw.version}&site=${pjw.site}" width="300" height="300" style="display: none;"></iframe>`;
     
       $$(window).on("message", (e) => {
         if (e.originalEvent.origin !== "https://potatoplus.zcec.top") return;
@@ -205,6 +189,8 @@ window.potatojw_intl = function() {
               pjw.data.bulletin_content = data["content"];
               pjw.data.bulletin_update_timestamp = new Date().getTime();
               $$("#pjw-bulletin-content").html(data["content"]);
+              pjw.data.latest_version = data["latest_version"];
+              pjw.renderUpdateNotice(".pjw-xk-welcome-card");
             }
           }
         }

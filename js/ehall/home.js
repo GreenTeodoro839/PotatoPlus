@@ -334,7 +334,6 @@
     var iframe = document.createElement("iframe");
     iframe.src = "https://potatoplus.zcec.top/apps/potatoplus-bulletin/?version=" +
       encodeURIComponent(pjw.version || "") +
-      "&share_stats=" + ((pjw.preferences.share_usage_data || (pjw.preferences.login_settings && pjw.preferences.login_settings.share_stats)) ? 1 : 0) +
       "&site=ehall";
     iframe.width = "300";
     iframe.height = "300";
@@ -351,6 +350,8 @@
             pjw.data.bulletin_update_timestamp = new Date().getTime();
             var el = document.getElementById("pp-home-bulletin");
             if (el) el.innerHTML = data.content;
+            pjw.data.latest_version = data.latest_version;
+            pjw.renderUpdateNotice(".pp-welcome-card");
             window.removeEventListener("message", bulletinHandler);
             iframe.remove();
           }
@@ -380,6 +381,7 @@
     } else {
       body.insertBefore(cards, body.firstChild);
     }
+    if (window.pjw) pjw.renderUpdateNotice(".pp-welcome-card");
     getBulletin();
     getMenuConfig();
 
