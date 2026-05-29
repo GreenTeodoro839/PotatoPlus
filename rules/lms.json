@@ -1,0 +1,11 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "||lms.nju.edu.cn/chatbot/chatbot.umd.js",
+      "resourceTypes": ["script"]
+    }
+  }
+]

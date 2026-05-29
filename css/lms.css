@@ -1,0 +1,214 @@
+/* lms.nju.edu.cn 页面精简：chatbot 脚本已被 DNR 拦截，此处兜底隐藏其惰性残留元素，防止闪烁 */
+air-chatbot-app { display: none !important; }
+
+/* ============ 首页「速览」看板 ============ */
+.pjw-lms-body {
+  min-height: 100vh;
+  background: #f4f5f7;
+  color: #1f2329;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.pjw-lms-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 24px;
+  height: 56px;
+  color: #fff;
+  background: linear-gradient(135deg, #3d1a5c 0%, #63065f 100%);
+  box-shadow: 0 2px 10px rgba(99, 6, 95, .25);
+}
+.pjw-lms-brand { display: flex; align-items: baseline; gap: 8px; }
+.pjw-lms-logo { font-size: 22px; }
+.pjw-lms-brand-name { font-size: 18px; font-weight: 700; letter-spacing: .3px; }
+.pjw-lms-brand-sub { font-size: 13px; opacity: .75; }
+.pjw-lms-nav { display: flex; align-items: center; gap: 6px; }
+.pjw-lms-qlink {
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  padding: 6px 10px;
+  border-radius: 7px;
+  opacity: .9;
+  transition: background .15s, opacity .15s;
+}
+.pjw-lms-qlink:hover { background: rgba(255, 255, 255, .15); opacity: 1; }
+.pjw-lms-origin {
+  margin-left: 6px;
+  font-size: 14px;
+  color: #fff;
+  background: rgba(255, 255, 255, .16);
+  border: 1px solid rgba(255, 255, 255, .35);
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.pjw-lms-origin:hover { background: rgba(255, 255, 255, .28); }
+
+.pjw-lms-main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 24px 64px;
+}
+.pjw-lms-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+@media (max-width: 760px) { .pjw-lms-row { grid-template-columns: 1fr; } }
+
+.pjw-lms-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .06), 0 6px 18px rgba(0, 0, 0, .04);
+  overflow: hidden;
+}
+.pjw-lms-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid #eef0f2;
+}
+.pjw-lms-card-title { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.pjw-lms-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: #63065f;
+  background: rgba(99, 6, 95, .08);
+  padding: 2px 9px;
+  border-radius: 999px;
+}
+.pjw-lms-count:empty { display: none; }
+.pjw-lms-card-body { padding: 8px 10px; max-height: 360px; overflow-y: auto; }
+
+.pjw-lms-item {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  padding: 9px 10px;
+  border-radius: 9px;
+  transition: background .12s;
+}
+.pjw-lms-item:hover { background: #f6f2f8; }
+.pjw-lms-item + .pjw-lms-item { border-top: 1px solid #f2f3f5; }
+.pjw-lms-item-main { display: flex; align-items: center; gap: 8px; }
+.pjw-lms-item-title {
+  font-size: 14px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pjw-lms-item-sub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 3px;
+  font-size: 12px;
+  color: #8a9099;
+}
+.pjw-lms-tag {
+  flex: none;
+  font-size: 11px;
+  color: #63065f;
+  background: rgba(99, 6, 95, .08);
+  padding: 1px 7px;
+  border-radius: 5px;
+}
+.pjw-lms-due { color: #d9534f; flex: none; }
+.pjw-lms-unread .pjw-lms-item-title::after {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: #e64340;
+  vertical-align: middle;
+}
+
+.pjw-lms-search {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 4px 0 12px;
+  padding: 10px 14px;
+  font-size: 14px;
+  border: 1px solid #e3e5e8;
+  border-radius: 10px;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.pjw-lms-search:focus { border-color: #63065f; box-shadow: 0 0 0 3px rgba(99, 6, 95, .12); }
+
+.pjw-lms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+.pjw-lms-course {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  padding: 12px 14px;
+  border: 1px solid #eef0f2;
+  border-radius: 11px;
+  transition: border-color .15s, box-shadow .15s, transform .1s;
+}
+.pjw-lms-course:hover {
+  border-color: #63065f;
+  box-shadow: 0 4px 14px rgba(99, 6, 95, .12);
+  transform: translateY(-1px);
+}
+.pjw-lms-course-name {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pjw-lms-course-meta {
+  font-size: 12px;
+  color: #8a9099;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pjw-lms-loading, .pjw-lms-empty, .pjw-lms-err {
+  padding: 22px 10px;
+  text-align: center;
+  font-size: 13px;
+  color: #9aa0a6;
+}
+.pjw-lms-err { color: #d9534f; }
+
+.pjw-lms-login {
+  max-width: 420px;
+  margin: 80px auto;
+  padding: 40px 32px;
+  text-align: center;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .08);
+}
+.pjw-lms-login-title { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+.pjw-lms-login-sub { font-size: 14px; color: #8a9099; margin-bottom: 22px; line-height: 1.5; }
+.pjw-lms-login .pjw-lms-origin {
+  margin: 0;
+  color: #fff;
+  background: linear-gradient(135deg, #3d1a5c 0%, #63065f 100%);
+  border: 0;
+  padding: 10px 28px;
+  font-size: 15px;
+}
