@@ -22,24 +22,22 @@ function initXKWelcome(getBulletin) {
       <label for="pjw-enable-switch">启用 PotatoPlus (Beta)</label>
     </div>
 
-    <div class="pjw-xk-welcome-subsection">
-      <div class="pjw-xk-welcome-option">
-        <button id="pjw-solve-captcha-switch" class="mdc-switch mdc-switch--unselected" type="button" role="switch" aria-checked="false" data-mdc-auto-init="MDCRipple">
-          <div class="mdc-switch__track"></div>
-          <div class="mdc-switch__handle-track">
-            <div class="mdc-switch__handle">
-              <div class="mdc-switch__shadow">
-                <div class="mdc-elevation-overlay"></div>
-              </div>
-              <div class="mdc-switch__ripple"></div>
+    <div class="pjw-xk-welcome-option">
+      <button id="pjw-solve-captcha-switch" class="mdc-switch mdc-switch--unselected" type="button" role="switch" aria-checked="false" data-mdc-auto-init="MDCRipple">
+        <div class="mdc-switch__track"></div>
+        <div class="mdc-switch__handle-track">
+          <div class="mdc-switch__handle">
+            <div class="mdc-switch__shadow">
+              <div class="mdc-elevation-overlay"></div>
             </div>
+            <div class="mdc-switch__ripple"></div>
           </div>
-          <span class="mdc-switch__focus-ring-wrapper">
-            <div class="mdc-switch__focus-ring"></div>
-          </span>
-        </button>
-        <label for="pjw-solve-captcha-switch">验证码自动识别（本地）</label>
-      </div>
+        </div>
+        <span class="mdc-switch__focus-ring-wrapper">
+          <div class="mdc-switch__focus-ring"></div>
+        </span>
+      </button>
+      <label for="pjw-solve-captcha-switch">验证码自动识别（本地）</label>
     </div>
   </div>
   `;
@@ -48,13 +46,8 @@ function initXKWelcome(getBulletin) {
   const enable_switch = new window.mdc.switchControl.MDCSwitch(document.getElementById("pjw-enable-switch"));
   enable_switch.selected = pjw.isOn("enabled");
   $("#pjw-enable-switch").on("click", () => {
-    const target = $(".pjw-xk-welcome-subsection");
-    if (pjw.switch()) target.show();
-    else target.hide();
+    pjw.switch();
   });
-
-  if (!pjw.isOn("enabled"))
-    $(".pjw-xk-welcome-subsection").hide();
 
   const solve_captcha_switch = new window.mdc.switchControl.MDCSwitch(document.getElementById("pjw-solve-captcha-switch"));
   solve_captcha_switch.selected = pjw.isOn("solve_captcha");
@@ -149,7 +142,7 @@ function initXKWelcome(getBulletin) {
     pjw.captcha_initialized = true;
   }
 
-  pjw.isOn("enabled") && pjw.isOn("solve_captcha") && initCAPTCHASolver();
+  pjw.isOn("solve_captcha") && initCAPTCHASolver();
 
   const welcome_html = `
     <div class="pjw-xk-welcome-card">
