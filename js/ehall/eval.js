@@ -19,6 +19,14 @@
     return result;
   }
 
+  function isVisible(el) {
+    return !!(el && (el.offsetWidth || el.offsetHeight || el.getClientRects().length));
+  }
+
+  function textOf(el) {
+    return (el && (el.innerText || el.textContent) || "").replace(/\s+/g, " ").trim();
+  }
+
   // 所有选项选"很好"
   function allgood() {
     var index = 1;
@@ -42,7 +50,7 @@
     var submit = xpath('//footer[@id="txwjFooter"]//a[text()[contains(.,"提交")]]');
     if (!submit) {
       console.warn("[PotatoPlus] 找不到提交按钮");
-      return;
+      return "missing";
     }
     console.info("[PotatoPlus] 提交");
     submit.click();
@@ -65,20 +73,29 @@
 
     await sleep(200);
 
-    var no_tas = xpath('//div[@class="bh-dialog-btnContainerBox"]//a[text()[contains(.,"暂时不评")]]');
-    if (no_tas) {
-      console.info("[PotatoPlus] 跳过助教评价");
-      no_tas.click();
+    var evalTas = xpath('//*[self::a or self::button][contains(normalize-space(.),"立即评教")]')
+      || xpath('//*[self::a or self::button][contains(normalize-space(.),"立即去评教")]');
+    if (evalTas && isVisible(evalTas)) {
+      evalTas.click();
+      await sleep(1200);
+      return "assistant";
     }
+
+    return "done";
   }
 
   // 进入下一个待评教课程
   var next_judge_button_index = 1;
+  function visibleCourseButtons() {
+    var visiblePane = Array.prototype.slice.call(document.querySelectorAll(".ckdwpj .jqx-tabs-content-element"))
+      .filter(isVisible)[0];
+    var root = visiblePane || document.querySelector(".ckdwpj") || document;
+    return Array.prototype.slice.call(root.querySelectorAll(".card-btn.blue"))
+      .filter(isVisible);
+  }
+
   async function nextCourse() {
-    var judge_next = xpath(
-      '//section[@class="ckdwpj"]//div[@style="display: block;"]//div[@class="card-btn blue"]',
-      next_judge_button_index
-    );
+    var judge_next = visibleCourseButtons()[next_judge_button_index - 1];
     if (judge_next == null) {
       console.info("[PotatoPlus] 没有下一个要评价了");
       return false;
@@ -102,22 +119,70 @@
     return true;
   }
 
-  // 主流程：循环评教所有课程
-  async function autoEvalAll() {
+  function findEvalTab(label) {
+    var tabs = Array.prototype.slice.call(document.querySelectorAll(".ckdwpj .jqx-tabs-title"));
+    return tabs.filter(function (tab) {
+      return isVisible(tab) && textOf(tab).indexOf(label) !== -1;
+    })[0];
+  }
+
+  async function switchEvalTab(label) {
+    var tab = findEvalTab(label);
+    if (!tab) return false;
+    if (tab.className.indexOf("jqx-tabs-title-selected") === -1) {
+      tab.click();
+      await sleep(1200);
+    }
     next_judge_button_index = 1;
+    return true;
+  }
+
+  async function evalOpenedQuestionnaire() {
+    var completed = 0;
+    for (var depth = 0; depth < 6; depth++) {
+      await sleep(1000);
+      allgood();
+      var result = await submitEval();
+      if (result === "missing") break;
+      completed++;
+      if (result !== "assistant") break;
+    }
+    return completed;
+  }
+
+  async function autoEvalTab(label, initialCount) {
+    var switched = await switchEvalTab(label);
+    if (!switched) return 0;
+
+    var count = 0;
+    while (await nextCourse()) {
+      count += await evalOpenedQuestionnaire();
+      await sleep(500);
+      updateButton("running", initialCount + count);
+    }
+    return count;
+  }
+
+  // 主流程：循环评教所有期末与助教项目
+  async function autoEvalAll() {
     var count = 0;
     updateButton("running");
 
-    while (await nextCourse()) {
-      await sleep(1000);
-      allgood();
-      await submitEval();
-      await sleep(500);
-      count++;
+    count += await autoEvalTab("期末评教", count);
+    updateButton("running", count);
+
+    count += await autoEvalTab("助教评教", count);
+    updateButton("running", count);
+
+    var evalTas = xpath('//*[self::a or self::button][contains(normalize-space(.),"立即评教")]')
+      || xpath('//*[self::a or self::button][contains(normalize-space(.),"立即去评教")]');
+    if (evalTas && isVisible(evalTas)) {
+      evalTas.click();
+      count += await evalOpenedQuestionnaire();
       updateButton("running", count);
     }
 
-    console.log("[PotatoPlus] 自动评教完成，共评价 " + count + " 门课程");
+    console.log("[PotatoPlus] 自动评教完成，共评价 " + count + " 项");
     updateButton("done", count);
   }
 
@@ -128,11 +193,11 @@
   function updateButton(state, count) {
     if (!btnEl) return;
     if (state === "running") {
-      btnEl.textContent = "🔄 评教中..." + (count ? " (" + count + " 门已完成)" : "");
+      btnEl.textContent = "🔄 评教中..." + (count ? " (" + count + " 项已完成)" : "");
       btnEl.style.backgroundColor = "#ff9800";
       btnEl.style.pointerEvents = "none";
     } else if (state === "done") {
-      btnEl.textContent = "✅ 评教完成！共 " + (count || 0) + " 门";
+      btnEl.textContent = "✅ 评教完成！共 " + (count || 0) + " 项";
       btnEl.style.backgroundColor = "#4caf50";
       btnEl.style.pointerEvents = "none";
     } else {
