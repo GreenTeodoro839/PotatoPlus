@@ -1,9 +1,9 @@
 // background.js - PotatoPlus Service Worker
 // 处理需要绕过 CORS 的请求（课表 API 等）
 
-importScripts("./common/term.js");
-
 if (!globalThis.browser) globalThis.browser = globalThis.chrome;
+
+var TERM_CONFIG_URL = "https://potatoplus.zcec.top/apps/potatoplus-schedule/semester.json";
 
 browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
   if (msg.type === "pp-schedule-fetch") {
@@ -15,6 +15,17 @@ browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 });
 
 async function handleScheduleFetch(msg) {
+  var termConfig = await fetchTermConfig();
+  if (!termConfig.termCode) {
+    return {
+      courses: [],
+      termCode: "",
+      termName: termConfig.termName || "假期中",
+      semesterStartMonday: termConfig.semesterStartMonday || "",
+      isHoliday: true,
+    };
+  }
+
   // 0. 检查 ehall 登录状态
   var loginResp = await fetch(
     "https://ehall.nju.edu.cn/jsonp/ywtb/info/getUserInfoAndSchoolInfo",
@@ -38,83 +49,121 @@ async function handleScheduleFetch(msg) {
     // 不阻断，可能已经激活过
   }
 
-  // 2. 获取学期列表
-  var termResp = await fetch(
-    "https://ehallapp.nju.edu.cn/jwapp/sys/wdkb/modules/jshkcb/xnxqcx.do",
-    { method: "POST", credentials: "include" }
-  );
-  if (!termResp.ok) throw new Error("获取学期列表失败 (HTTP " + termResp.status + ")");
-  var termData = await termResp.json();
-  var rows = (termData.datas && (termData.datas.xnxqcx || termData.datas.jshkcb || {}).rows) || null;
-  if (!rows || !rows.length) throw new Error("学期列表为空");
-  var term = pjwTerm.selectCurrentTerm(rows, new Date());
-  var termCode = pjwTerm.getTermCode(term);
-  var termName = term.MC || term.XNXQDM_DISPLAY || termCode;
+  // 2. 用网站配置的学期编号初始化并获取课表
+  await fetch("https://ehallapp.nju.edu.cn/jwapp/sys/wdkb/modules/xskcb.do", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+    body: "*json=1&XNXQDM=" + encodeURIComponent(termConfig.termCode),
+  }).catch(function () {});
 
-  // 3. 获取课表
   var schedResp = await fetch(
-    "https://ehallapp.nju.edu.cn/jwapp/sys/wdkb/modules/xskcb/xskcb.do?XNXQDM=" + termCode,
-    { credentials: "include" }
+    "https://ehallapp.nju.edu.cn/jwapp/sys/wdkb/modules/xskcb/cxxskclb.do",
+    {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+      body: "XNXQDM=" + encodeURIComponent(termConfig.termCode) + "&pageSize=100&pageNumber=1",
+    }
   );
   if (!schedResp.ok) throw new Error("获取课表失败 (HTTP " + schedResp.status + ")");
   var schedData = await schedResp.json();
-  var raws = (schedData.datas && schedData.datas.xskcb && schedData.datas.xskcb.rows) || [];
+  var raws = (schedData.datas && schedData.datas.cxxskclb && schedData.datas.cxxskclb.rows) || [];
 
-  // 4. 解析课程
-  var courses = [];
-  raws.forEach(function (r) {
-    var weeks = parseWeeks(r.ZCMC, r.SKZC);
-    if (!weeks.length) return;
-    courses.push({
-      name: r.KCM || "",
-      classroom: r.JASMC || "",
-      classNumber: r.KCH || "",
-      teacher: r.SKJS || "",
-      weeks: weeks,
-      weekTime: parseInt(r.SKXQ) || 0,
-      startTime: parseInt(r.KSJC) || 0,
-      endTime: parseInt(r.JSJC) || 0,
-      weeksStr: r.ZCMC || "",
-    });
-  });
-
-  // 5. 获取学期起始日期
-  var semesterStartMonday = null;
-  try {
-    var semResp = await fetch("https://potatoplus.zcec.top/apps/potatoplus-schedule/semester.json");
-    console.log("[PotatoPlus bg] semester.json status:", semResp.status);
-    if (semResp.ok) {
-      var semData = await semResp.json();
-      semesterStartMonday = semData.semester_start_monday || null;
-      console.log("[PotatoPlus bg] semester_start_monday:", semesterStartMonday);
-    }
-  } catch (e) {
-    console.warn("[PotatoPlus bg] 获取学期起始日期失败:", e);
-  }
+  var courses = parseCourseRows(raws);
 
   return {
     courses: courses,
+    termCode: termConfig.termCode,
+    termName: termConfig.termName || termConfig.termCode,
+    semesterStartMonday: termConfig.semesterStartMonday,
+    isHoliday: false,
+  };
+}
+
+async function fetchTermConfig() {
+  var resp = await fetch(TERM_CONFIG_URL, { cache: "no-cache" });
+  if (!resp.ok) throw new Error("获取学期配置失败 (HTTP " + resp.status + ")");
+  var data = await resp.json();
+  var termCode = stringValue(data.term_code || data.termCode || data.code);
+  var termName = stringValue(data.display_name || data.term_name || data.termName || data.name);
+  var semesterStartMonday = stringValue(data.semester_start_monday || data.start_monday || data.first_week_monday || data.semesterStartMonday);
+  if (termCode && !/^\d{4}-\d{4}-[123]$/.test(termCode)) throw new Error("学期配置编号格式错误");
+  if (semesterStartMonday && !/^\d{4}-\d{2}-\d{2}$/.test(semesterStartMonday)) throw new Error("学期起始日期格式错误");
+  return {
     termCode: termCode,
-    termName: termName,
+    termName: termName || (termCode ? termCode : "假期中"),
     semesterStartMonday: semesterStartMonday,
   };
 }
 
-function parseWeeks(t, b) {
-  if (typeof b === "string" && b.length > 0) {
-    var w = [];
-    for (var i = 0; i < b.length; i++) if (b[i] === "1") w.push(i + 1);
-    if (w.length > 0) return w;
-  }
-  if (!t) return [];
-  var ws = [];
-  t.split(",").forEach(function (p) {
-    var m = p.match(/(\d+)(?:-(\d+))?周?(?:\((单|双)\))?/);
-    if (!m) return;
-    var s = +m[1], e = m[2] ? +m[2] : s, f = m[3] === "单" ? 1 : m[3] === "双" ? 2 : 0;
-    for (var w = s; w <= e; w++)
-      if (f === 0 || (f === 1 && w % 2 === 1) || (f === 2 && w % 2 === 0))
-        if (ws.indexOf(w) < 0) ws.push(w);
+function stringValue(value) {
+  return value == null ? "" : String(value).trim();
+}
+
+function parseCourseRows(rows) {
+  var courses = [];
+  rows.forEach(function (row) {
+    parseScheduleText(row.ZCXQJCDD || "").forEach(function (slot) {
+      courses.push({
+        name: row.JXBMC || row.KCM || "",
+        classroom: slot.classroom || "",
+        classNumber: row.KCH || "",
+        teacher: row.SKJS || row.SKJSS || "",
+        weeks: slot.weeks,
+        weekTime: slot.weekTime,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        weeksStr: slot.weeksStr,
+      });
+    });
   });
-  return ws.sort(function (a, b) { return a - b; });
+  return courses;
+}
+
+function parseScheduleText(text) {
+  return String(text || "")
+    .split(/[，,](?=周[一二三四五六日天])/)
+    .map(parseSchedulePart)
+    .filter(Boolean);
+}
+
+function parseSchedulePart(part) {
+  var m = String(part || "").trim().match(/^周([一二三四五六日天])\s*(\d+)\s*-\s*(\d+)节\s*([^\s]+周)\s*(.*)$/);
+  if (!m) return null;
+  var weeks = parseWeeksText(m[4]);
+  if (!weeks.length) return null;
+  return {
+    weekTime: weekdayToNumber(m[1]),
+    startTime: parseInt(m[2], 10) || 0,
+    endTime: parseInt(m[3], 10) || 0,
+    weeks: weeks,
+    weeksStr: m[4],
+    classroom: (m[5] || "").trim(),
+  };
+}
+
+function weekdayToNumber(value) {
+  return { "一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "日": 7, "天": 7 }[value] || 0;
+}
+
+function parseWeeksText(value) {
+  var s = String(value || "").replace(/第/g, "").replace(/周/g, "").replace(/\s+/g, "");
+  var odd = /单/.test(s);
+  var even = /双/.test(s);
+  s = s.replace(/[单双]/g, "");
+  var weeks = [];
+  s.split(/[、,，;；]/).forEach(function (part) {
+    if (!part) return;
+    var range = part.match(/^(\d+)(?:[-~至](\d+))?$/);
+    if (!range) return;
+    var start = parseInt(range[1], 10);
+    var end = parseInt(range[2] || range[1], 10);
+    for (var i = start; i <= end; i++) {
+      if (odd && i % 2 === 0) continue;
+      if (even && i % 2 === 1) continue;
+      weeks.push(i);
+    }
+  });
+  return Array.from(new Set(weeks)).sort(function (a, b) { return a - b; });
 }

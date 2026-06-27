@@ -34,10 +34,10 @@
   function dayDate(wk,dow,start){var d=new Date(monday(new Date(start)));d.setDate(d.getDate()+(wk-1)*7+(dow-1));return d;}
   function ccolor(n){var h=0;for(var i=0;i<n.length;i++){h=((h<<5)-h)+n.charCodeAt(i);h|=0;}return COLORS[Math.abs(h)%COLORS.length];}
 
-  // --- cache --- (term parsing lives in js/common/term.js)
+  // --- cache ---
   function getCache(){try{var c=JSON.parse(localStorage.getItem(CACHE_KEY));return c&&c.timestamp&&c.courses&&cacheMatchesCurrentTerm(c)?c:null;}catch(e){return null;}}
-  function setCache(d){var obj={timestamp:Date.now(),courses:d.courses,termCode:d.termCode,termName:d.termName};if(d.semesterStartMonday)obj.semesterStartMonday=d.semesterStartMonday;localStorage.setItem(CACHE_KEY,JSON.stringify(obj));}
-  function cacheMatchesCurrentTerm(c){var code=c.termCode||pjwTerm.termCodeFromName(c.termName);return !code||pjwTerm.dateInTermCode(new Date(),code);}
+  function setCache(d){var obj={timestamp:Date.now(),courses:d.courses||[],termCode:d.termCode||"",termName:d.termName||"",isHoliday:!!d.isHoliday};if(d.semesterStartMonday)obj.semesterStartMonday=d.semesterStartMonday;localStorage.setItem(CACHE_KEY,JSON.stringify(obj));}
+  function cacheMatchesCurrentTerm(c){return true;}
 
   // --- fetch via background (through bridge content script) ---
   var _reqId = 0;
@@ -68,7 +68,6 @@
 
   async function getData(force){
     var c=getCache();
-    if(!force&&c&&Date.now()-c.timestamp<CACHE_TTL)return c;
     if(!force&&c){
       try{var f=await fetchViaBackground(false);setCache(f);return f;}catch(e){console.warn("[PotatoPlus] 刷新失败，用旧缓存:",e);return c;}
     }
@@ -161,6 +160,7 @@
     var hl=document.createElement("div");hl.style.cssText="display:flex;align-items:center";
     hl.innerHTML='<span class="pp-sched-tt">📅 课表</span><span class="pp-sched-st">'+esc(data.termName||"")+'</span>';
     var hr=document.createElement("div");hr.className="pp-sched-acts";
+    var holiday=!!(data&&data.isHoliday);
 
     var ws=document.createElement("div");ws.className="pp-wk-sel";
     var pb=document.createElement("button");pb.className="pp-wk-b";pb.textContent="◀";
@@ -183,11 +183,13 @@
 
     var cb=document.createElement("button");cb.className="pp-sched-ib";cb.textContent="✕";cb.onclick=closeSchedule;
 
-    hr.appendChild(ws);hr.appendChild(rb);hr.appendChild(cb);
+    if(!holiday)hr.appendChild(ws);
+    hr.appendChild(rb);hr.appendChild(cb);
     hd.appendChild(hl);hd.appendChild(hr);modal.appendChild(hd);
 
     var body=document.createElement("div");body.className="pp-sched-body";body.id="pp-sched-body";
     modal.appendChild(body);
+    if(holiday){body.innerHTML='<div class="pp-sched-load" style="color:#999"><div style="font-size:28px">假期中</div><div style="font-size:13px;color:#bbb">暂无当前学期课表</div></div>';return;}
     renderGrid();
   }
 

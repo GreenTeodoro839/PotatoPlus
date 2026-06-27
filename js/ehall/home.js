@@ -13,11 +13,23 @@
   function renderMenuButtons(items) {
     var buttonsDiv = document.getElementById("pp-menu-buttons");
     if (!buttonsDiv) return;
-    buttonsDiv.innerHTML = items.map(function(item) {
-      return '<a class="pp-menu-btn" href="' + item.url + '" target="_blank">' +
-             '<span class="pp-menu-btn-icon">' + item.emoji + '</span>' +
-             item.label + '</a>';
-    }).join("");
+    buttonsDiv.textContent = "";
+    items.forEach(function(item) {
+      if (!item || !item.url || !item.label) return;
+      var a = document.createElement("a");
+      a.className = "pp-menu-btn";
+      a.href = item.url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+
+      var icon = document.createElement("span");
+      icon.className = "pp-menu-btn-icon";
+      icon.textContent = item.emoji || "";
+
+      a.appendChild(icon);
+      a.appendChild(document.createTextNode(item.label));
+      buttonsDiv.appendChild(a);
+    });
   }
 
   function getMenuConfig() {
@@ -29,28 +41,20 @@
       return;
     }
 
-    var iframe = document.createElement("iframe");
-    iframe.src = "https://potatoplus.zcec.top/apps/potatoplus-menu/";
-    iframe.style.display = "none";
-    document.body.appendChild(iframe);
-
-    function menuHandler(e) {
-      if (e.origin !== "https://potatoplus.zcec.top") return;
-      if (e.data) try {
-        var data = JSON.parse(e.data);
-        if (data.type !== "menu-config") return;
-        window.removeEventListener("message", menuHandler);
-        iframe.remove();
-        var items = data.items;
-        if (!Array.isArray(items)) return;
+    fetch("https://potatoplus.zcec.top/apps/potatoplus-menu/config.json")
+      .then(function(r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(function(items) {
+        if (!Array.isArray(items)) throw new Error("invalid menu config");
         pjw.data.menu_items = items;
         pjw.data.menu_config_timestamp = new Date().getTime();
         renderMenuButtons(items);
-      } catch (err) {
-        console.warn("[PotatoPlus] menu config parse error:", err);
-      }
-    }
-    window.addEventListener("message", menuHandler);
+      })
+      .catch(function(err) {
+        console.warn("[PotatoPlus] menu config fetch error:", err);
+      });
   }
 
   var CSS = `
@@ -236,17 +240,18 @@
 
   function getSemesterName() {
     var cache = getScheduleCache();
-    if (cache && cache.termName) return cache.termName;
     fetchWeekAsync();
+    if (cache && cache.termName) return cache.termName;
     return "";
   }
 
   function getWeekString() {
     var cache = getScheduleCache();
+    fetchWeekAsync();
+    if (cache && cache.isHoliday) return "假期中";
     if (cache && cache.semesterStartMonday) {
       return formatWeek(cache.semesterStartMonday);
     }
-    fetchWeekAsync();
     return "";
   }
 
@@ -263,10 +268,8 @@
       _scheduleFetchPending = false;
       if (!resp) return;
       window.ppSchedule.setCache(resp);
-      if (resp.semesterStartMonday) {
-        var el = document.querySelector(".pp-menu-week");
-        if (el) el.textContent = formatWeek(resp.semesterStartMonday);
-      }
+      var el = document.querySelector(".pp-menu-week");
+      if (el) el.textContent = resp.isHoliday ? "假期中" : (resp.semesterStartMonday ? formatWeek(resp.semesterStartMonday) : "");
       if (resp.termName) {
         var semEl = document.querySelector(".pp-menu-semester");
         if (semEl) semEl.textContent = resp.termName;

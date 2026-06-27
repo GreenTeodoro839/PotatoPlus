@@ -301,7 +301,6 @@ if (pjw_mode == "portal") {
   // ehall 首页
   injectScripts([
     "js/common/core.js",
-    "js/common/term.js",
     "js/ehall/schedule.js",
     "js/ehall/home.js",
   ]);
