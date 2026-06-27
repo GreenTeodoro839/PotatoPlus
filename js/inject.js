@@ -290,6 +290,10 @@ if (pjw_mode == "portal") {
   // ehall 成绩查询页面
   injectScripts([
     "js/common/core.js",
+    "js/vendor/chart-amd-guard.js",
+    "js/vendor/chart.umd.js",
+    "js/vendor/chart-amd-restore.js",
+    "js/ehall/grade-visualizer.js",
     "js/ehall/grade.js",
   ]);
 
