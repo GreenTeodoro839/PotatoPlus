@@ -289,8 +289,6 @@
       btnEl.addEventListener("click", openPanel);
       document.body.appendChild(btnEl);
       console.log("[PotatoPlus] 成绩查询按钮已注入");
-      // 保留按钮，同时页面加载后自动执行一次打开
-      openPanel();
     }
 
     if (document.readyState === "loading") {
