@@ -1,13 +1,54 @@
-// PotatoPlus — authserver 统一身份认证 登录劫持
-// 同步设置标志，让后续脚本（authserver_captcha.js 等）能读到
-pjw._authserverHijackActive = pjw.isOn("authserver_hijack");
-
+// PotatoPlus — authserver 统一身份认证
+// 美化开启：自定义登录界面，点“登录”时无 UI 地自动完成滑块验证 + 提交登录（滑块协议见 sliderCaptcha.js）。
+// 美化关闭：不处理验证码，仅在原始页插入“启用美化”入口（按钮代码沿用原 authserver_captcha.js）。
 (function () {
   "use strict";
 
-  if (!pjw.isOn("authserver_hijack")) return;
+  if (!pjw.isOn("authserver_hijack")) {
+    // --- 美化关闭：仅插入“启用美化”入口，原始页自带滑块自行处理 ---
+    function initEnableButton() {
+      const styleEl = document.createElement("style");
+      styleEl.textContent = `.pjw-authserver-wrapper * { font-family: inherit; }`;
+      document.head.appendChild(styleEl);
 
-  // --- 注入样式 ---
+      const container = document.querySelector("section.main")
+        || document.querySelector(".main")
+        || document.querySelector("#main")
+        || document.querySelector(".auth_login_wrapper")
+        || document.body;
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "pjw-authserver-wrapper";
+      wrapper.style.cssText = "margin: 8px 0 0 0; display: flex; align-items: center; gap: 8px; justify-content: center;";
+      container.appendChild(wrapper);
+
+      const enableHijackBtn = document.createElement("span");
+      enableHijackBtn.textContent = "PotatoPlus 美化";
+      enableHijackBtn.title = "点击启用 PotatoPlus 页面美化";
+      enableHijackBtn.style.cssText = "cursor:pointer;user-select:none;border:1px solid #ccc;border-radius:4px;padding:1px 5px;font-size:12px;color:#999;margin-left:4px;";
+      enableHijackBtn.addEventListener("mouseover", function() {
+        enableHijackBtn.style.borderColor = "#90138b";
+        enableHijackBtn.style.color = "#90138b";
+      });
+      enableHijackBtn.addEventListener("mouseout", function() {
+        enableHijackBtn.style.borderColor = "#ccc";
+        enableHijackBtn.style.color = "#999";
+      });
+      enableHijackBtn.addEventListener("click", function() {
+        pjw.preferences.authserver_hijack = true;
+        location.reload();
+      });
+      wrapper.appendChild(enableHijackBtn);
+    }
+
+    if (document.readyState === "loading")
+      document.addEventListener("DOMContentLoaded", initEnableButton);
+    else
+      initEnableButton();
+    return;
+  }
+
+  // --- 美化开启：注入样式 ---
   const styleEl = document.createElement("style");
   styleEl.textContent = `
     #pjw-as-overlay {
@@ -36,37 +77,6 @@ pjw._authserverHijackActive = pjw.isOn("authserver_hijack");
       border-color: #63065f; box-shadow: 0 0 0 3px rgba(99,6,95,.1); background: #fff;
     }
     .pjw-as-field input::placeholder { color: #bbb; }
-    /* 验证码行 */
-    .pjw-as-captcha-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: stretch; }
-    .pjw-as-captcha-input-wrap { flex: 1; }
-    #pjw-as-captcha {
-      width: 100%; box-sizing: border-box; padding: 12px 16px;
-      border: 1.5px solid #ddd; border-radius: 10px; font-size: 15px;
-      color: #333; background: #fafafa; outline: none;
-      transition: border-color .2s, box-shadow .2s;
-    }
-    #pjw-as-captcha:focus {
-      border-color: #63065f; box-shadow: 0 0 0 3px rgba(99,6,95,.1); background: #fff;
-    }
-    #pjw-as-captcha::placeholder { color: #bbb; }
-    .pjw-as-captcha-img-wrap {
-      flex-shrink: 0; display: flex; align-items: center; gap: 2px;
-      border: 1.5px solid #ddd; border-radius: 10px; padding: 0 8px 0 6px;
-      background: #fafafa; cursor: pointer; transition: border-color .2s;
-    }
-    .pjw-as-captcha-img-wrap:hover { border-color: #63065f; }
-    #pjw-as-captcha-img { height: 32px; display: block; border-radius: 4px; pointer-events: none; min-width: 72px; }
-    #pjw-as-captcha-refresh {
-      background: none; border: none; padding: 2px 0 2px 2px; cursor: pointer;
-      font-size: 17px; color: #bbb; line-height: 1; flex-shrink: 0;
-    }
-    #pjw-as-captcha-refresh:hover { color: #63065f; }
-    /* 验证码识别控件 */
-    .pjw-as-captcha-controls {
-      display: flex; align-items: center; gap: 8px; margin: 0 0 14px;
-      padding: 8px 0; border-top: 1px solid #f0f0f0; border-bottom: 1px solid #f0f0f0;
-    }
-    .pjw-as-ctrl-label { font-size: 13px; color: #666; flex: 1; user-select: none; }
     /* 拨动开关 */
     .pjw-as-switch { position: relative; display: inline-block; width: 36px; height: 20px; flex-shrink: 0; }
     .pjw-as-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
@@ -161,39 +171,22 @@ pjw._authserverHijackActive = pjw.isOn("authserver_hijack");
       '<div class="pjw-as-container"><div class="pjw-as-card">' +
         '<div class="pjw-as-header">' +
           '<div class="pjw-as-title">PotatoPlus</div>' +
-          '<div class="pjw-as-subtitle">\u7edf\u4e00\u8eab\u4efd\u8ba4\u8bc1\u767b\u5f55</div>' +
+          '<div class="pjw-as-subtitle">统一身份认证登录</div>' +
         '</div>' +
         '<form id="pjw-as-form" autocomplete="off">' +
           '<div class="pjw-as-field">' +
-            '<input id="pjw-as-username" type="text" placeholder="\u5b66\u53f7"' +
+            '<input id="pjw-as-username" type="text" placeholder="学号"' +
               ' value="' + savedUser.replace(/"/g, "&quot;") + '" autocomplete="username" spellcheck="false">' +
           '</div>' +
           '<div class="pjw-as-field">' +
-            '<input id="pjw-as-password" type="password" placeholder="\u5bc6\u7801"' +
+            '<input id="pjw-as-password" type="password" placeholder="密码"' +
               ' value="' + savedPass.replace(/"/g, "&quot;") + '" autocomplete="current-password">' +
-          '</div>' +
-          '<div class="pjw-as-captcha-row">' +
-            '<div class="pjw-as-captcha-input-wrap">' +
-              '<input id="pjw-as-captcha" type="text" placeholder="\u9a8c\u8bc1\u7801" autocomplete="off" maxlength="10">' +
-            '</div>' +
-            '<div class="pjw-as-captcha-img-wrap" id="pjw-as-captcha-img-wrap" title="\u70b9\u51fb\u5237\u65b0\u9a8c\u8bc1\u7801">' +
-              '<img id="pjw-as-captcha-img" alt="\u9a8c\u8bc1\u7801">' +
-              '<button type="button" id="pjw-as-captcha-refresh">\u21ba</button>' +
-            '</div>' +
-          '</div>' +
-          '<div class="pjw-as-captcha-controls">' +
-            '<label class="pjw-as-switch">' +
-              '<input type="checkbox" id="pjw-as-captcha-switch">' +
-              '<span class="pjw-as-slider"></span>' +
-            '</label>' +
-            '<span class="pjw-as-ctrl-label">\u9a8c\u8bc1\u7801\u8bc6\u522b</span>' +
-            '<span style="width:42px;flex-shrink:0;"></span>' +
           '</div>' +
           '<label class="pjw-as-checkbox">' +
             '<input id="pjw-as-save" type="checkbox"' + (hasSaved ? " checked" : "") + '>' +
-            '<span>\u8bb0\u4f4f\u5bc6\u7801</span>' +
+            '<span>记住密码</span>' +
           '</label>' +
-          '<button id="pjw-as-submit" type="submit">\u767b \u5f55</button>' +
+          '<button id="pjw-as-submit" type="submit">登 录</button>' +
         '</form>' +
         '<div class="pjw-as-footer">' +
           '<span>PotatoPlus ' + version + '</span>' +
@@ -202,13 +195,13 @@ pjw._authserverHijackActive = pjw.isOn("authserver_hijack");
               '<input type="checkbox" id="pjw-as-hijack-switch" checked>' +
               '<span class="pjw-as-slider"></span>' +
             '</label>' +
-            '<span class="pjw-as-footer-label">\u9875\u9762\u7f8e\u5316</span>' +
+            '<span class="pjw-as-footer-label">页面美化</span>' +
           '</div>' +
           '<div class="pjw-as-qr-wrap">' +
             qrSVG +
             '<div class="pjw-as-qr-popup">' +
-              '<img id="pjw-as-qr-img" width="160" height="160" alt="\u626b\u7801\u767b\u5f55">' +
-              '<p>\u5fae\u4fe1\u6216\u5357\u4eac\u5927\u5b66APP\u626b\u7801\u767b\u5f55</p>' +
+              '<img id="pjw-as-qr-img" width="160" height="160" alt="扫码登录">' +
+              '<p>微信或南京大学APP扫码登录</p>' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -218,78 +211,18 @@ pjw._authserverHijackActive = pjw.isOn("authserver_hijack");
     document.body.appendChild(overlay);
 
     // --- 引用 ---
-    const usernameEl       = document.getElementById("pjw-as-username");
-    const passwordEl       = document.getElementById("pjw-as-password");
-    const captchaEl        = document.getElementById("pjw-as-captcha");
-    const captchaImgEl     = document.getElementById("pjw-as-captcha-img");
-    const captchaImgWrap   = document.getElementById("pjw-as-captcha-img-wrap");
-    const captchaRefreshEl = document.getElementById("pjw-as-captcha-refresh");
-    const captchaSwitchEl  = document.getElementById("pjw-as-captcha-switch");
-    const saveEl           = document.getElementById("pjw-as-save");
-    const submitEl         = document.getElementById("pjw-as-submit");
-    const hijackSwitchEl   = document.getElementById("pjw-as-hijack-switch");
-    const qrImgEl          = document.getElementById("pjw-as-qr-img");
-    const toastWrap        = document.getElementById("pjw-as-toast-wrap");
+    const usernameEl     = document.getElementById("pjw-as-username");
+    const passwordEl     = document.getElementById("pjw-as-password");
+    const saveEl         = document.getElementById("pjw-as-save");
+    const submitEl       = document.getElementById("pjw-as-submit");
+    const hijackSwitchEl = document.getElementById("pjw-as-hijack-switch");
+    const qrImgEl        = document.getElementById("pjw-as-qr-img");
+    const toastWrap      = document.getElementById("pjw-as-toast-wrap");
 
     // --- 初始焦点 ---
     if (!usernameEl.value) usernameEl.focus();
     else if (!passwordEl.value) passwordEl.focus();
     else submitEl.focus();
-
-    // --- 验证码图片：等 .login-main #captchaImg 有 src 后移入 overlay ---
-    // 页面结构：.login-main.login-slider > #loginViewDiv > form#pwdFromId > ... > img#captchaImg
-    // 其他 tab（phoneLoginDiv/pwdLoginDiv）也有 #captchaImg，但 .login-main 下的才是当前激活视图的。
-    // 与 authserver_captcha.js 保持一致，用 ".login-main #captchaImg" 定位。
-    var _mainCaptchaImg = null;
-
-    function reparentCaptchaImg(img) {
-      if (_mainCaptchaImg) return;
-      _mainCaptchaImg = img;
-      img.id = "pjw-captcha-img-active";
-      img.style.cssText =
-        "height:32px!important;display:block!important;border-radius:4px!important;" +
-        "pointer-events:none!important;min-width:72px!important;max-width:120px!important;";
-      var placeholder = document.getElementById("pjw-as-captcha-img");
-      if (placeholder && placeholder.parentNode) {
-        placeholder.parentNode.replaceChild(img, placeholder);
-      }
-    }
-
-    (function watchLoginMainCaptcha() {
-      function watchImg(img) {
-        if (img.getAttribute("src")) { reparentCaptchaImg(img); return; }
-        var obs = new MutationObserver(function() {
-          if (img.getAttribute("src")) { obs.disconnect(); reparentCaptchaImg(img); }
-        });
-        obs.observe(img, { attributes: true, attributeFilter: ["src"] });
-      }
-
-      var img = document.querySelector(".login-main #captchaImg");
-      if (img) { watchImg(img); return; }
-
-      // .login-main 尚未插入 DOM，等待
-      var bodyObs = new MutationObserver(function() {
-        var img = document.querySelector(".login-main #captchaImg");
-        if (img) { bodyObs.disconnect(); watchImg(img); }
-      });
-      bodyObs.observe(document.body, { childList: true, subtree: true });
-    })();
-
-    // --- 刷新验证码 ---
-    function doRefresh() {
-      // 直接操作 _mainCaptchaImg，不用 getElementById（移动后 id 已改，且页面有重复 id）
-      if (_mainCaptchaImg) {
-        _mainCaptchaImg.src = "/authserver/getCaptcha.htl?" + Date.now();
-      } else if (typeof reloadCaptcha === "function") {
-        reloadCaptcha(true);
-      }
-      captchaEl.value = "";
-      captchaEl.focus();
-    }
-    captchaRefreshEl.addEventListener("click", doRefresh);
-    captchaImgWrap.addEventListener("click", function(e) {
-      if (e.target !== captchaRefreshEl) doRefresh();
-    });
 
     // --- 同步二维码图片 ---
     var origQrImg = document.getElementById("qr_img");
@@ -302,25 +235,18 @@ pjw._authserverHijackActive = pjw.isOn("authserver_hijack");
       new MutationObserver(syncQr).observe(origQrImg, { attributes: true, attributeFilter: ["src"] });
     }
 
-    // --- 劫持开关 ---
+    // --- 劫持开关（关闭后刷新即恢复原始页面，inject.js 不再注入） ---
     hijackSwitchEl.addEventListener("change", function() {
       pjw.preferences.authserver_hijack = hijackSwitchEl.checked;
       if (!hijackSwitchEl.checked) location.reload();
     });
 
-    // --- 验证码识别开关 ---
-    captchaSwitchEl.checked = pjw.isOn("authserver_solve_captcha");
-    captchaSwitchEl.addEventListener("change", function() {
-      pjw.preferences.authserver_solve_captcha = captchaSwitchEl.checked;
-      if (captchaSwitchEl.checked) initCaptchaSolver();
-    });
-
-    // --- 阻止键盘事件冒泡到原始页面（原始页面在 body 上监听 keyup Enter 来触发登录，会导致双重提交） ---
+    // --- 阻止键盘事件冒泡到原始页面（原始页面在 body 上监听 Enter 会触发双重提交） ---
     overlay.addEventListener("keydown", function(e) { e.stopPropagation(); });
     overlay.addEventListener("keyup",   function(e) { e.stopPropagation(); });
     overlay.addEventListener("keypress",function(e) { e.stopPropagation(); });
 
-    // --- 焦点在 overlay 外时（如原始隐藏表单），Enter 键同样交由 overlay 处理 ---
+    // --- 焦点在 overlay 外时，Enter 同样交由 overlay 处理 ---
     document.addEventListener("keydown", function(e) {
       if (e.key === "Enter" && !overlay.contains(document.activeElement)) {
         e.preventDefault();
@@ -340,15 +266,13 @@ pjw._authserverHijackActive = pjw.isOn("authserver_hijack");
       doLogin();
     });
 
-    function doLogin() {
+    async function doLogin() {
       var username = usernameEl.value.trim();
       var password = passwordEl.value;
-      var captcha  = captchaEl.value.trim();
-      if (!username || !password) return showToast("\u8bf7\u8f93\u5165\u5b66\u53f7\u548c\u5bc6\u7801", true);
-      if (!captcha) return showToast("\u8bf7\u8f93\u5165\u9a8c\u8bc1\u7801", true);
+      if (!username || !password) return showToast("请输入学号和密码", true);
 
       submitEl.disabled = true;
-      submitEl.textContent = "\u767b\u5f55\u4e2d\u2026";
+      submitEl.textContent = "登录中…";
 
       // 保存凭据
       if (saveEl.checked) {
@@ -359,114 +283,133 @@ pjw._authserverHijackActive = pjw.isOn("authserver_hijack");
         delete pjw.data.as_password;
       }
 
-      // 填入原始表单
-      var origUser    = document.getElementById("username");
-      var origPass    = document.getElementById("password"); // name="passwordText"
-      var origCaptcha = document.getElementById("captcha");
-      if (origUser)    { origUser.value    = username; origUser.dispatchEvent(new Event("input", { bubbles: true })); }
-      if (origPass)    { origPass.value    = password; origPass.dispatchEvent(new Event("input", { bubbles: true })); }
-      if (origCaptcha) { origCaptcha.value = captcha;  origCaptcha.dispatchEvent(new Event("input", { bubbles: true })); }
-
-      // 监听错误提示
-      var errorEl = document.getElementById("showErrorTip") || document.getElementById("nameErrorTip") || document.getElementById("pwdErrorTip");
-      var errorObserver = null;
-      var errorTimer = null;
-
-      function resetSubmit() {
-        submitEl.disabled = false;
-        submitEl.textContent = "\u767b \u5f55";
-        if (errorObserver) { errorObserver.disconnect(); errorObserver = null; }
-        if (errorTimer) { clearTimeout(errorTimer); errorTimer = null; }
-      }
-
-      if (errorEl) {
-        errorObserver = new MutationObserver(function() {
-          var msg = errorEl.textContent.trim();
-          if (msg) { showToast(msg, true); resetSubmit(); }
-        });
-        errorObserver.observe(errorEl, { childList: true, subtree: true, characterData: true });
-      }
-
-      // 也监听 formErrorTip
-      var formErrorEl = document.getElementById("formErrorTip");
-      var formErrorObs = null;
-      if (formErrorEl) {
-        formErrorObs = new MutationObserver(function() {
-          var el = document.getElementById("showErrorTip");
-          var msg = el ? el.textContent.trim() : formErrorEl.textContent.trim();
-          if (msg) { showToast(msg, true); resetSubmit(); if (formErrorObs) { formErrorObs.disconnect(); formErrorObs = null; } }
-        });
-        formErrorObs.observe(formErrorEl, { childList: true, subtree: true, characterData: true });
-      }
-
-      errorTimer = setTimeout(resetSubmit, 15000);
-
-      // 点击原始登录按钮（触发页面自带加密逻辑）
-      var loginBtn = document.getElementById("login_submit") || document.querySelector("a.login-btn");
-      if (loginBtn) {
-        loginBtn.click();
-      } else {
-        var form = document.getElementById("pwdFromId");
-        if (form) form.submit();
-        else resetSubmit();
-      }
-    }
-
-    // --- Toast ---
-    function showToast(msg, isError) {
-      var old = document.getElementById("pjw-as-toast");
-      if (old) old.remove();
-      var t = document.createElement("div");
-      t.id = "pjw-as-toast";
-      t.className = "pjw-as-toast " + (isError ? "pjw-as-toast-error" : "pjw-as-toast-info");
-      t.textContent = msg;
-      toastWrap.appendChild(t);
-      requestAnimationFrame(function() {
-        requestAnimationFrame(function() { t.classList.add("pjw-as-toast-show"); });
-      });
-      setTimeout(function() {
-        t.classList.remove("pjw-as-toast-show");
-        setTimeout(function() { if (t.parentNode) t.remove(); }, 400);
-      }, isError ? 5000 : 3000);
-    }
-
-    // --- 验证码识别器 ---
-    var _captchaInited = false;
-    var _solvingCaptcha = false;
-
-    function initCaptchaSolver() {
-      if (_captchaInited) return;
-      _captchaInited = true;
-      // _mainCaptchaImg is set by watchLoginMainCaptcha once .login-main #captchaImg
-      // has a src; the shared watcher handles appearance + src-change lifecycle.
-      pjwAuthserverWatchCaptchaImg(
-        function() { return _mainCaptchaImg; },
-        function(imgEl) { solveCaptcha(imgEl); }
-      );
-    }
-
-    async function solveCaptcha(imgEl) {
-      if (!pjw.isOn("authserver_solve_captcha")) return;
-      if (_solvingCaptcha) return;
-      if (!imgEl || !imgEl.complete || imgEl.naturalWidth === 0) return;
-      _solvingCaptcha = true;
-      showToast("\u6b63\u5728\u8bc6\u522b\u9a8c\u8bc1\u7801\u2026", false);
       try {
-        var startedAt = performance.now();
-        var ocr = await getPjwAuthserverCaptchaOcr();
-        var text = await ocr.predictFromImageElement(imgEl);
-        if (typeof text !== "string" || text.length !== 4) throw new Error("\u8bc6\u522b\u7ed3\u679c\u683c\u5f0f\u4e0d\u6b63\u786e");
-        captchaEl.value = text;
-        captchaEl.dispatchEvent(new Event("input", { bubbles: true }));
-        showToast("\u8bc6\u522b\u5b8c\u6210: " + text + " (" + (performance.now() - startedAt).toFixed(0) + "ms)", false);
+        // 1. 检查是否需要滑块验证
+        if (await checkNeedCaptcha(username)) {
+          showToast("正在处理滑块验证…", false);
+          var ok = await pjwVerifySliderCaptcha({ attempts: 5 });
+          if (!ok) {
+            showToast("滑块验证失败，请重试", true);
+            return resetSubmit();
+          }
+        }
+        // 2. 提交登录（真实表单导航，由浏览器处理 CAS 跳转 / Cookie）
+        await submitLogin(username, password);
+        // 成功：页面已导航离开；失败会刷新回登录页，由 observePageError 提示
       } catch (e) {
-        showToast("\u9a8c\u8bc1\u7801\u8bc6\u522b\u5931\u8d25: " + e.message, true);
-      } finally {
-        _solvingCaptcha = false;
+        showToast("登录出错: " + (e && e.message || e), true);
+        resetSubmit();
       }
     }
 
-    if (pjw.isOn("authserver_solve_captcha")) initCaptchaSolver();
+    // 检查当前账号是否需要滑块验证（默认按“需要”处理）
+    async function checkNeedCaptcha(username) {
+      try {
+        var resp = await fetch(
+          location.origin + "/authserver/checkNeedCaptcha.htl?username=" + encodeURIComponent(username),
+          { credentials: "include" }
+        );
+        var data = await resp.json();
+        return !(data && data.isNeed === false);
+      } catch (_) {
+        return true;
+      }
+    }
+
+    // 读取原始表单的隐藏字段 + 盐，构造并提交一个真实表单
+    async function submitLogin(username, password) {
+      var salt = (document.getElementById("pwdEncryptSalt") || {}).value;
+      var form = getPwdForm();
+      function field(name) {
+        var el = form && form.querySelector('input[name="' + name + '"]');
+        return el ? el.value : "";
+      }
+      var lt = field("lt");
+      var execution = field("execution");
+      var eventId = field("_eventId") || "submit";
+      var cllt = field("cllt") || "userNameLogin";
+      var dllt = field("dllt");
+      var rmShown = field("rmShown");
+
+      if (!salt) throw new Error("缺少加密盐");
+      var encPwd = await pjwEncryptAuthserverPassword(password, salt);
+
+      var formEl = document.createElement("form");
+      formEl.method = "POST";
+      formEl.action = location.href; // 含 service 参数
+      formEl.style.display = "none";
+      function append(name, value) {
+        var input = document.createElement("input");
+        input.type = "hidden"; input.name = name; input.value = value;
+        formEl.appendChild(input);
+      }
+      append("username", username);
+      append("password", encPwd);
+      append("lt", lt);
+      append("captcha", "");
+      append("cllt", cllt);
+      append("dllt", dllt);
+      append("execution", execution);
+      append("_eventId", eventId);
+      if (rmShown) append("rmShown", rmShown);
+      document.body.appendChild(formEl);
+      formEl.submit();
+    }
+
+    function getPwdForm() {
+      var cllt = document.querySelector('input[name="cllt"][value="userNameLogin"]');
+      if (cllt) return cllt.closest("form");
+      return document.getElementById("pwdFromId") || document.querySelector("form");
+    }
+
+    function resetSubmit() {
+      submitEl.disabled = false;
+      submitEl.textContent = "登 录";
+    }
+
+    // --- 失败回显：登录失败后页面刷新回登录页，原始 #showErrorTip 会被服务端填入 ---
+    // 由于我们隐藏了原始页面，这里把它转成 toast。
+    observePageError();
+
+    function observePageError() {
+      var selectors = ["#showErrorTip", "#nameErrorTip", "#pwdErrorTip", "#formErrorTip", "#authErrorTip", "#msg"];
+      function readError() {
+        for (var i = 0; i < selectors.length; i++) {
+          var el = document.querySelector(selectors[i]);
+          if (el) { var t = (el.textContent || "").trim(); if (t) return t; }
+        }
+        return "";
+      }
+      var shown = readError();
+      if (shown) { showToast(shown, true); resetSubmit(); return; }
+      var obs = new MutationObserver(function() {
+        var msg = readError();
+        if (msg) { showToast(msg, true); resetSubmit(); obs.disconnect(); }
+      });
+      obs.observe(document.body, { childList: true, subtree: true, characterData: true });
+      setTimeout(function() { obs.disconnect(); }, 15000);
+    }
+  }
+
+  // --- Toast ---
+  function showToast(msg, isError) {
+    var overlay = document.getElementById("pjw-as-overlay");
+    if (!overlay) return; // init 之前的服务端错误暂无 UI 承载
+    var toastWrap = document.getElementById("pjw-as-toast-wrap");
+    var old = document.getElementById("pjw-as-toast");
+    if (old) old.remove();
+    var t = document.createElement("div");
+    t.id = "pjw-as-toast";
+    t.className = "pjw-as-toast " + (isError ? "pjw-as-toast-error" : "pjw-as-toast-info");
+    t.textContent = msg;
+    toastWrap.appendChild(t);
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() { t.classList.add("pjw-as-toast-show"); });
+    });
+    setTimeout(function() {
+      t.classList.remove("pjw-as-toast-show");
+      setTimeout(function() { if (t.parentNode) t.remove(); }, 400);
+    }, isError ? 5000 : 3000);
   }
 
   if (document.readyState === "loading")

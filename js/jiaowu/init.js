@@ -217,7 +217,7 @@ window.potatojw_intl = function() {
 
 // Entry point for non-authserver pages
 (function() {
-  if (pjw.site == "authserver") return; // authserver/authserver_captcha.js handles this
+  if (pjw.site == "authserver") return; // authserver/login.js handles this
   if (document.readyState == "complete")
     potatojw_intl();
   else

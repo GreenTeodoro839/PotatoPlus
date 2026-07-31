@@ -236,7 +236,7 @@ if (pjw_mode == "portal") {
   var _pjwAuthD = {};
   try { _pjwAuthD = JSON.parse(localStorage.getItem("potatoplus_data")) || {}; } catch (_) {}
   if (_pjwAuthD.authserver_hijack !== false) {
-    // 劫持模式：隐藏原始页面，注入自定义登录界面
+    // 美化开启：隐藏原始页面，注入自定义登录界面；点“登录”时无 UI 自动完成滑块验证。
     injectStyleFromString(
       "body{visibility:hidden!important}" +
       "#pjw-as-overlay{visibility:visible!important}" +
@@ -244,16 +244,14 @@ if (pjw_mode == "portal") {
     );
     injectScripts([
       "js/common/core.js",
-      "js/common/tinycnn.js",
-      "js/authserver/authserver_captcha.js",
+      "js/authserver/sliderCaptcha.js",
       "js/authserver/login.js",
     ]);
   } else {
-    // 非劫持模式：加载验证码识别器
+    // 美化关闭：不处理验证码（原始页自带滑块），login.js 负责插入“启用美化”入口。
     injectScripts([
       "js/common/core.js",
-      "js/common/tinycnn.js",
-      "js/authserver/authserver_captcha.js",
+      "js/authserver/login.js",
     ]);
   }
 
