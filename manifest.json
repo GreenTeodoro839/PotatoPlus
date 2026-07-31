@@ -13,7 +13,6 @@
   "content_scripts": [
     {
       "matches": [
-        "*://*.nju.edu.cn/jiaowu*",
         "*://xk.nju.edu.cn/*"
       ],
       "css": [
@@ -142,7 +141,6 @@
     "service_worker": "js/background.js"
   },
   "host_permissions": [
-    "*://*.nju.edu.cn/jiaowu*",
     "*://p.nju.edu.cn/*",
     "*://xk.nju.edu.cn/*",
     "*://authserver.nju.edu.cn/*",

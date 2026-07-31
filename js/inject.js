@@ -310,12 +310,5 @@ if (pjw_mode == "portal") {
     "js/ams/ams.js",
   ]);
 
-} else if (pjw_mode != "") {
-  injectScripts([
-    "js/vendor/jquery.min.js",
-    "js/vendor/material-components-web.min.js",
-    "js/common/core.js",
-    "js/jiaowu/init.js",
-  ]);
 }
 

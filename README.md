@@ -65,8 +65,8 @@ js/
 │   └── ams.js         # 顶栏/侧栏/列表/详情/欢迎页 UI 美化
 ├── lms/               # 智汇南雍 lms.nju.edu.cn
 │   └── home.js        # 首页「速览」：拦截重型 SPA，直接调接口渲染轻量看板
-└── jiaowu/            # 旧教务系统
-    └── init.js        # 教务页面通用初始化
+└── jiaowu/            # xk 选课流程引导 (init.js)
+    └── init.js        # xk welcome/course 模式引导脚本
 ```
 
 ## 说明
