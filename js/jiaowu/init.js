@@ -18,49 +18,6 @@ window.potatojw_intl = function() {
   `;
   $$("head").prepend(head_metadata);
 
-  if (pjw.site == "jw") {
-    if ($$("#Function").length) {
-      $$("#Function").addClass("light");
-      $$("#Function").find("li").on("click", (e) => {
-        window.location.href = $$(e.delegateTarget).find("a").attr("href");
-      });
-    }
-
-    if ($$("#UserInfo").length) {
-      $$("#UserInfo").html(`
-        <div id="pjw-user-info" onclick="window.location.href = '/jiaowu/student/teachinginfo/courseList.do?method=currentTermCourse';">${$$("#UserInfo").html().slice(4).match(/.*?\&/)[0].slice(0, -1)}
-          <div id="pjw-user-type">${$$("#UserInfo").html().slice(4).match(/：.*/)[0].slice(1)}</div>
-        </div>
-      `);
-      $$("#TopLink").children("img").remove();
-      if ($$(".Line").length) {
-        $$("table").find("tr").each((index, obj) => {
-          if ($$(obj).html().trim() == "")
-            $$(obj).remove();
-        });
-        $$("table").find("td[align=right] > b").css({
-          "font-size": "14px",
-          "color": "rgba(0, 0, 0, .75)",
-          "font-weight": "bold"
-        });
-        $$("table").find("td[align=left] > b").css({
-          "font-size": "14px",
-          "color": "rgba(0, 0, 0, .65)",
-          "font-weight": "normal"
-        });
-        $$("table").find("td[align=left] > b > a").css({
-          "font-size": "14px",
-          "color": "rgba(0, 0, 0, .65)",
-          "font-weight": "normal"
-        });
-      }
-    }
-    
-    if ($$("div#TopLink").length > 0) {
-      $$("div#TopLink").html(`<span class="pjw-mini-button" onclick="window.open('https://potatoplus.zcec.top')">v${pjw.version}</span>`);
-    }
-  }
-
   console.log(`PotatoPlus v${pjw.version} (${pjw.platform}) by Limos`);
   if (pjw.mode == "") return;
   console.log(pjw.mode + " mode activated");
