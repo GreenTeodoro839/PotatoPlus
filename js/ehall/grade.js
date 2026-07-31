@@ -274,6 +274,7 @@
   var btnEl = null;
 
   function injectButton() {
+    if (!pjw.featureOn("ehall.grade_query")) return; // 设置页开关关则不注入浮动按钮
     var attempts = 0;
     function tryInject() {
       attempts++;

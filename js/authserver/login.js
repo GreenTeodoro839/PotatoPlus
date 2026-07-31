@@ -4,50 +4,6 @@
 (function () {
   "use strict";
 
-  if (!pjw.isOn("authserver_hijack")) {
-    // --- 美化关闭：仅插入“启用美化”入口，原始页自带滑块自行处理 ---
-    function initEnableButton() {
-      const styleEl = document.createElement("style");
-      styleEl.textContent = `.pjw-authserver-wrapper * { font-family: inherit; }`;
-      document.head.appendChild(styleEl);
-
-      const container = document.querySelector("section.main")
-        || document.querySelector(".main")
-        || document.querySelector("#main")
-        || document.querySelector(".auth_login_wrapper")
-        || document.body;
-
-      const wrapper = document.createElement("div");
-      wrapper.className = "pjw-authserver-wrapper";
-      wrapper.style.cssText = "margin: 8px 0 0 0; display: flex; align-items: center; gap: 8px; justify-content: center;";
-      container.appendChild(wrapper);
-
-      const enableHijackBtn = document.createElement("span");
-      enableHijackBtn.textContent = "PotatoPlus 美化";
-      enableHijackBtn.title = "点击启用 PotatoPlus 页面美化";
-      enableHijackBtn.style.cssText = "cursor:pointer;user-select:none;border:1px solid #ccc;border-radius:4px;padding:1px 5px;font-size:12px;color:#999;margin-left:4px;";
-      enableHijackBtn.addEventListener("mouseover", function() {
-        enableHijackBtn.style.borderColor = "#90138b";
-        enableHijackBtn.style.color = "#90138b";
-      });
-      enableHijackBtn.addEventListener("mouseout", function() {
-        enableHijackBtn.style.borderColor = "#ccc";
-        enableHijackBtn.style.color = "#999";
-      });
-      enableHijackBtn.addEventListener("click", function() {
-        pjw.preferences.authserver_hijack = true;
-        location.reload();
-      });
-      wrapper.appendChild(enableHijackBtn);
-    }
-
-    if (document.readyState === "loading")
-      document.addEventListener("DOMContentLoaded", initEnableButton);
-    else
-      initEnableButton();
-    return;
-  }
-
   // --- 美化开启：注入样式 ---
   const styleEl = document.createElement("style");
   styleEl.textContent = `
@@ -77,20 +33,6 @@
       border-color: #63065f; box-shadow: 0 0 0 3px rgba(99,6,95,.1); background: #fff;
     }
     .pjw-as-field input::placeholder { color: #bbb; }
-    /* 拨动开关 */
-    .pjw-as-switch { position: relative; display: inline-block; width: 36px; height: 20px; flex-shrink: 0; }
-    .pjw-as-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
-    .pjw-as-slider {
-      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-      background: #ccc; transition: .3s; border-radius: 20px;
-    }
-    .pjw-as-slider::before {
-      content: ""; position: absolute; height: 14px; width: 14px;
-      left: 3px; bottom: 3px; background: #fff; transition: .3s;
-      border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,.3);
-    }
-    .pjw-as-switch input:checked + .pjw-as-slider { background: #90138b; }
-    .pjw-as-switch input:checked + .pjw-as-slider::before { transform: translateX(16px); }
     /* 记住密码 */
     .pjw-as-checkbox {
       display: flex; align-items: center; gap: 8px; margin: 4px 0 18px; cursor: pointer; user-select: none;
@@ -190,13 +132,6 @@
         '</form>' +
         '<div class="pjw-as-footer">' +
           '<span>PotatoPlus ' + version + '</span>' +
-          '<div class="pjw-as-footer-center">' +
-            '<label class="pjw-as-switch">' +
-              '<input type="checkbox" id="pjw-as-hijack-switch" checked>' +
-              '<span class="pjw-as-slider"></span>' +
-            '</label>' +
-            '<span class="pjw-as-footer-label">页面美化</span>' +
-          '</div>' +
           '<div class="pjw-as-qr-wrap">' +
             qrSVG +
             '<div class="pjw-as-qr-popup">' +
@@ -215,7 +150,6 @@
     const passwordEl     = document.getElementById("pjw-as-password");
     const saveEl         = document.getElementById("pjw-as-save");
     const submitEl       = document.getElementById("pjw-as-submit");
-    const hijackSwitchEl = document.getElementById("pjw-as-hijack-switch");
     const qrImgEl        = document.getElementById("pjw-as-qr-img");
     const toastWrap      = document.getElementById("pjw-as-toast-wrap");
 
@@ -234,12 +168,6 @@
       syncQr();
       new MutationObserver(syncQr).observe(origQrImg, { attributes: true, attributeFilter: ["src"] });
     }
-
-    // --- 劫持开关（关闭后刷新即恢复原始页面，inject.js 不再注入） ---
-    hijackSwitchEl.addEventListener("change", function() {
-      pjw.preferences.authserver_hijack = hijackSwitchEl.checked;
-      if (!hijackSwitchEl.checked) location.reload();
-    });
 
     // --- 阻止键盘事件冒泡到原始页面（原始页面在 body 上监听 Enter 会触发双重提交） ---
     overlay.addEventListener("keydown", function(e) { e.stopPropagation(); });

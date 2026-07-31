@@ -165,8 +165,7 @@ window.potatojw_intl = function() {
     }
   } else if (pjw.mode == "course") {
     // xk/course.js handles this
-    $(".user-dropdown").prepend(`<div style="cursor: pointer; color: #4D87F2; line-height: 17px; margin-bottom: 20px;" onclick="window.pjw.switch();window.location.reload();">${pjw.isOn("enabled") ? "禁用 PotatoPlus" : "启用 PotatoPlus (Beta)"}</div>`);
-    pjw.isOn("enabled") && enterMode("course");
+    pjw.featureOn("xk.beautify") && enterMode("course");
   } else {
     return;
   }

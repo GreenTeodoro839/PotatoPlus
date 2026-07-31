@@ -37,19 +37,22 @@ const pjw = {
     }
   }),
   preferences: {},
+  settings: {},
   // Check if a default-on preference is currently on (null → true)
   isOn: function(key) { return pjw.preferences[key] !== false; },
+  // Check a settings-page (chrome.storage) feature flag; default-on, graceful if bridge missing
+  featureOn: function(key) {
+    try {
+      var m = document.querySelector('meta[name="pjw-settings"]');
+      if (m) return (JSON.parse(m.getAttribute("content")) || {})[key] !== false;
+    } catch (_) {}
+    return pjw.settings[key] !== false;
+  },
   // Toggle a default-on preference, returns the new state
   toggle: function(key) {
     const next = !pjw.isOn(key);
     pjw.preferences[key] = next;
     return next;
-  },
-  switch: function() {
-    const on = pjw.toggle("enabled");
-    if (on) $(".pjw-xk-welcome-card")?.show();
-    else    $(".pjw-xk-welcome-card")?.hide();
-    return on;
   },
   UPDATE_URL: "https://potatoplus.zcec.top/#install",
   // Compare a remote version string against the running version (both may have a leading "v")
@@ -110,8 +113,12 @@ const pjw = {
   const info = document.querySelector("meta[name=\"pjw\"]");
   pjw.version = info.getAttribute("version");
   pjw.mode = info.getAttribute("mode");
-  pjw.site = (window.location.host == "xk.nju.edu.cn" ? "xk" : 
+  pjw.site = (window.location.host == "xk.nju.edu.cn" ? "xk" :
               (window.location.host == "authserver.nju.edu.cn" ? "authserver" : "jw"));
+  try {
+    const sMeta = document.querySelector("meta[name=\"pjw-settings\"]");
+    if (sMeta) pjw.settings = JSON.parse(sMeta.getAttribute("content")) || {};
+  } catch (_) { pjw.settings = {}; }
 })();
 
 window.proto_backup = {

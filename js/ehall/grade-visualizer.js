@@ -616,6 +616,7 @@
   }
 
   function start() {
+    if (!pjw.featureOn("ehall.grade_visualizer")) return; // 设置页开关关则不渲染面板
     ensurePanel();
     loadAndRender(false);
   }

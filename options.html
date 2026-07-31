@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PotatoPlus 设置</title>
+  <link rel="stylesheet" href="css/material-components-web.min.css">
+  <link rel="stylesheet" href="css/options.css">
+</head>
+
+<body>
+  <main class="pp-options">
+    <header class="pp-options__header">
+      <img class="pp-options__logo" src="img/logo128.png" alt="PotatoPlus">
+      <div class="pp-options__heading">
+        <h1 class="pp-options__title">PotatoPlus 设置</h1>
+        <p class="pp-options__subtitle">版本 <span id="pp-options-version">…</span> · 各功能可独立开关</p>
+      </div>
+    </header>
+    <!-- 由 js/options.js 按 FEATURES 数据驱动渲染，无需手写每条开关 -->
+    <div id="pp-options-groups" class="pp-options__groups"></div>
+  </main>
+  <script src="js/vendor/material-components-web.min.js"></script>
+  <script src="js/options.js"></script>
+</body>
+
+</html>

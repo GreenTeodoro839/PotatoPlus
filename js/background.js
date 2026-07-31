@@ -3,6 +3,55 @@
 
 if (!globalThis.browser) globalThis.browser = globalThis.chrome;
 
+// 点击工具栏图标 → 打开设置页（未设 default_popup，故 onClicked 会触发）
+browser.action.onClicked.addListener(function () {
+  browser.runtime.openOptionsPage();
+});
+
+// 站点级动态注册：ams / lms 的开关控制其内容脚本(JS+CSS)是否注册。
+// 注册 → 浏览器注入；注销 → 该站点完全不碰（无 JS、无 CSS、无脚本内判断）。
+var PP_SETTINGS_KEY = "potatoplus_settings";
+var DYNAMIC_SCRIPTS = [
+  { id: "potatoplus_ams", settingKey: "ams.beautify", matches: ["*://ams.nju.edu.cn/*"], css: ["css/ams-global.css"], js: ["js/inject.js"], runAt: "document_start", allFrames: true },
+  { id: "potatoplus_lms", settingKey: "lms.speedup", matches: ["*://lms.nju.edu.cn/*"], css: ["css/lms.css"], js: ["js/lms/home.js"], runAt: "document_start", allFrames: true },
+];
+var LMS_DNR_RULESET = "lms_chatbot_block"; // chatbot 拦截规则集，跟 lms.speedup 绑定
+async function pp_getSettings() {
+  try { return (await browser.storage.local.get(PP_SETTINGS_KEY))[PP_SETTINGS_KEY] || {}; } catch (_) { return {}; }
+}
+async function pp_syncDynamicScripts(settings) {
+  settings = settings || {};
+  var registered = [];
+  try { registered = await browser.scripting.getRegisteredContentScripts(); } catch (_) {}
+  var have = {};
+  registered.forEach(function (s) { have[s.id] = true; });
+  var toAdd = [], toRemove = [];
+  DYNAMIC_SCRIPTS.forEach(function (def) {
+    var on = settings[def.settingKey] !== false;
+    if (on && !have[def.id]) toAdd.push({ id: def.id, matches: def.matches, css: def.css, js: def.js, runAt: def.runAt, allFrames: def.allFrames });
+    if (!on && have[def.id]) toRemove.push(def.id);
+  });
+  if (toAdd.length) await browser.scripting.registerContentScripts(toAdd);
+  if (toRemove.length) await browser.scripting.unregisterContentScripts({ ids: toRemove });
+
+  // chatbot DNR 跟 lms.speedup 绑定：开 → 拦截，关 → 放行（让原版 SPA 连 chatbot 一起回来）
+  var lmsOn = settings["lms.speedup"] !== false;
+  try {
+    await browser.declarativeNetRequest.updateEnabledRulesets(
+      lmsOn ? { enableRulesetIds: [LMS_DNR_RULESET] } : { disableRulesetIds: [LMS_DNR_RULESET] }
+    );
+  } catch (e) { console.warn("[PotatoPlus bg] DNR sync:", e); }
+}
+browser.runtime.onInstalled.addListener(function () {
+  pp_getSettings().then(pp_syncDynamicScripts).catch(function (e) { console.warn("[PotatoPlus bg] dyn reg onInstalled:", e); });
+});
+browser.storage.onChanged.addListener(function (changes, area) {
+  if (area !== "local" || !changes[PP_SETTINGS_KEY]) return;
+  pp_syncDynamicScripts(changes[PP_SETTINGS_KEY].newValue || {}).catch(function (e) { console.warn("[PotatoPlus bg] dyn reg onChange:", e); });
+});
+// SW 启动兜底：扩展重载后已注册脚本可能丢失，按当前 settings 重建
+pp_getSettings().then(pp_syncDynamicScripts).catch(function () {});
+
 var TERM_CONFIG_URL = "https://potatoplus.zcec.top/apps/potatoplus-schedule/semester.json";
 
 browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {

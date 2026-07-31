@@ -2,59 +2,6 @@
 // Depends on: common/core.js (pjw), jQuery ($)
 
 function initXKWelcome(getBulletin) {
-  const pjw_options_html = `
-  <div class="pjw-xk-welcome-wrapper">
-    <div class="pjw-xk-welcome-option">
-      <button id="pjw-enable-switch" class="mdc-switch mdc-switch--unselected" type="button" role="switch" aria-checked="false" data-mdc-auto-init="MDCRipple">
-        <div class="mdc-switch__track"></div>
-        <div class="mdc-switch__handle-track">
-          <div class="mdc-switch__handle">
-            <div class="mdc-switch__shadow">
-              <div class="mdc-elevation-overlay"></div>
-            </div>
-            <div class="mdc-switch__ripple"></div>
-          </div>
-        </div>
-        <span class="mdc-switch__focus-ring-wrapper">
-          <div class="mdc-switch__focus-ring"></div>
-        </span>
-      </button>
-      <label for="pjw-enable-switch">启用 PotatoPlus (Beta)</label>
-    </div>
-
-    <div class="pjw-xk-welcome-option">
-      <button id="pjw-solve-captcha-switch" class="mdc-switch mdc-switch--unselected" type="button" role="switch" aria-checked="false" data-mdc-auto-init="MDCRipple">
-        <div class="mdc-switch__track"></div>
-        <div class="mdc-switch__handle-track">
-          <div class="mdc-switch__handle">
-            <div class="mdc-switch__shadow">
-              <div class="mdc-elevation-overlay"></div>
-            </div>
-            <div class="mdc-switch__ripple"></div>
-          </div>
-        </div>
-        <span class="mdc-switch__focus-ring-wrapper">
-          <div class="mdc-switch__focus-ring"></div>
-        </span>
-      </button>
-      <label for="pjw-solve-captcha-switch">验证码自动识别（本地）</label>
-    </div>
-  </div>
-  `;
-  $("div.language").before(pjw_options_html);
-
-  const enable_switch = new window.mdc.switchControl.MDCSwitch(document.getElementById("pjw-enable-switch"));
-  enable_switch.selected = pjw.isOn("enabled");
-  $("#pjw-enable-switch").on("click", () => {
-    pjw.switch();
-  });
-
-  const solve_captcha_switch = new window.mdc.switchControl.MDCSwitch(document.getElementById("pjw-solve-captcha-switch"));
-  solve_captcha_switch.selected = pjw.isOn("solve_captcha");
-
-  $("#pjw-solve-captcha-switch").on("click", () => {
-    if (pjw.toggle("solve_captcha")) initCAPTCHASolver();
-  });
 
   function showCaptchaToast(msg, isError) {
     $("#pjw-captcha-toast").remove();
@@ -80,7 +27,7 @@ function initXKWelcome(getBulletin) {
   let _solvingCaptcha = false;
 
   async function solveXKCAPTCHA() {
-    if (!pjw.isOn("solve_captcha") || $("#loginDiv").css("display") === "none") return;
+    if (!pjw.featureOn("xk.captcha") || $("#loginDiv").css("display") === "none") return;
     const imgEl = document.getElementById("vcodeImg");
     if (!imgEl || !imgEl.complete || imgEl.naturalWidth === 0) return;
     if (_solvingCaptcha) return;
@@ -142,7 +89,7 @@ function initXKWelcome(getBulletin) {
     pjw.captcha_initialized = true;
   }
 
-  pjw.isOn("solve_captcha") && initCAPTCHASolver();
+  pjw.featureOn("xk.captcha") && initCAPTCHASolver();
 
   const welcome_html = `
     <div class="pjw-xk-welcome-card">
@@ -160,7 +107,7 @@ function initXKWelcome(getBulletin) {
   `;
 
   $("div.language").before(welcome_html);
-  if (!pjw.isOn("enabled"))
+  if (!pjw.featureOn("xk.beautify"))
     $(".pjw-xk-welcome-card").hide();
 
   pjw.renderUpdateNotice(".pjw-xk-welcome-card");

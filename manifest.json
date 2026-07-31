@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "PotatoPlus",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "description": "Potato Overflow! NJU土豆改善工程",
   "icons": {
     "96": "img/logo96.png",
@@ -10,6 +10,14 @@
     "1024": "img/logo1024.png"
   },
   "author": "Limos",
+  "action": {
+    "default_icon": { "96": "img/logo96.png", "128": "img/logo128.png" },
+    "default_title": "PotatoPlus 设置"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
   "content_scripts": [
     {
       "matches": [
@@ -81,32 +89,6 @@
       ],
       "run_at": "document_start",
       "all_frames": true
-    },
-    {
-      "matches": [
-        "*://ams.nju.edu.cn/*"
-      ],
-      "css": [
-        "css/ams-global.css"
-      ],
-      "js": [
-        "js/inject.js"
-      ],
-      "run_at": "document_start",
-      "all_frames": true
-    },
-    {
-      "matches": [
-        "*://lms.nju.edu.cn/*"
-      ],
-      "css": [
-        "css/lms.css"
-      ],
-      "js": [
-        "js/lms/home.js"
-      ],
-      "run_at": "document_start",
-      "all_frames": true
     }
   ],
   "web_accessible_resources": [
@@ -126,7 +108,9 @@
   ],
   "permissions": [
     "nativeMessaging",
-    "declarativeNetRequest"
+    "declarativeNetRequest",
+    "storage",
+    "scripting"
   ],
   "declarative_net_request": {
     "rule_resources": [
