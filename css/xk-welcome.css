@@ -1,0 +1,65 @@
+/* xk 页样式：从原 pjw.css 抠出的仍在用的部分（美化/旧教务样式已随 xk.beautify 移除清理）。
+   注：原 hover 的 arrow_right 图标(::after)依赖 Material Icons 字体（随 MDC CSS 移除），
+   故图标 + 配套的 hover margin 缩放一起舍去——只留 margin 缩放会让 hover 时整行左右移动。 */
+
+.pjw-xk-welcome-card {
+  padding: 12px 24px;
+  background: linear-gradient(50deg, rgba(99, 6, 95, 0.9) 0%, rgba(93, 42, 175, 0.9) 60%, rgba(255, 71, 71, 0.9) 100%);
+  color: white;
+}
+
+.pjw-xk-welcome-card > p {
+  opacity: .87;
+}
+
+.pjw-xk-welcome-link-container {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+
+.pjw-xk-welcome-card a {
+  color: white;
+  opacity: 0.6;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.pjw-xk-welcome-card a:hover {
+  opacity: 0.9;
+}
+
+.pjw-xk-welcome-link-container > a {
+  margin-right: 16px;
+}
+
+/* Captcha toast notification */
+.pjw-captcha-toast {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-60px);
+  z-index: 100000;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.pjw-captcha-toast-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.pjw-captcha-toast-info {
+  background: rgba(33, 33, 33, 0.85);
+}
+.pjw-captcha-toast-error {
+  background: rgba(183, 28, 28, 0.9);
+}

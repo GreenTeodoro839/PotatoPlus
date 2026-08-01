@@ -17,8 +17,8 @@ var PP_SETTINGS_KEY = "potatoplus_settings";
 var DYNAMIC_SCRIPTS = [
   { id: "potatoplus_ams", settingKey: "ams.beautify", matches: ["*://ams.nju.edu.cn/*"], css: ["css/ams-global.css"], js: ["js/inject.js"], runAt: "document_start", allFrames: true },
   { id: "potatoplus_lms", settingKey: "lms.speedup", matches: ["*://lms.nju.edu.cn/*"], css: ["css/lms.css"], js: ["js/lms/home.js"], runAt: "document_start", allFrames: true },
-  // 红黑榜：给原生选课界面用，只在「美化关闭(xk.beautify) + 红黑榜开启」时注入（document_idle，顶层框架）
-  { id: "potatoplus_njuclass", matches: ["https://xk.nju.edu.cn/xsxkapp/*"], css: ["css/njuclass.css"], js: ["js/njuclass/core.js", "js/njuclass/content.js"], runAt: "document_idle", allFrames: false, when: function (s) { return s["xk.beautify"] === false && s["xk.hongheibang"] !== false; } },
+  // 红黑榜：给原生选课界面用，按 xk.hongheibang 开关注入（document_idle，顶层框架）
+  { id: "potatoplus_njuclass", matches: ["https://xk.nju.edu.cn/xsxkapp/*"], css: ["css/njuclass.css"], js: ["js/njuclass/core.js", "js/njuclass/content.js"], runAt: "document_idle", allFrames: false, when: function (s) { return s["xk.hongheibang"] !== false; } },
 ];
 var LMS_DNR_RULESET = "lms_chatbot_block"; // chatbot 拦截规则集，跟 lms.speedup 绑定
 async function pp_getSettings() {

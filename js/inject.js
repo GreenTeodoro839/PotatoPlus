@@ -35,7 +35,6 @@ function injectStyleFromString(str) {
 // Mode detection
 var modes_reg = {
   portal: /\/\/p\.nju\.edu\.cn\/portal/i,
-  course: /grablessons.do/i,
   welcome: /(xk.nju.edu.cn\/xsxkapp\/sys\/xsxkapp\/\*default\/index.do|\/\/xk.nju.edu.cn\/$)/i,
   xk_system: /\/\/xk.nju.edu.cn/i,
   authserver: /\/\/authserver\.nju\.edu\.cn\/authserver\/login/i,
@@ -275,20 +274,6 @@ if (pjw_mode == "ehall_grade") {
       "js/common/tinycnn.js",
       "js/xk/captcha_ocr.js",
       "js/xk/welcome.js",
-      "js/jiaowu/init.js",
-    ]);
-  
-  } else if (pjw_mode == "course") {
-    injectScripts([
-      "js/vendor/material-components-web.min.js",
-      "js/vendor/tinypinyin.js",
-      "js/common/core.js",
-      "js/common/console.js",
-      "js/common/lib.js",
-      "js/common/filter.js",
-      "js/common/classlist.js",
-      "js/common/crypto.js",
-      "js/xk/course.js",
       "js/jiaowu/init.js",
     ]);
   

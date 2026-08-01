@@ -107,9 +107,6 @@ function initXKWelcome(getBulletin) {
   `;
 
   $("div.language").before(welcome_html);
-  if (!pjw.featureOn("xk.beautify"))
-    $(".pjw-xk-welcome-card").hide();
-
   pjw.renderUpdateNotice(".pjw-xk-welcome-card");
   getBulletin();
 }

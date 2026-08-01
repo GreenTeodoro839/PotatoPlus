@@ -1,10 +1,10 @@
-// jiaowu/init.js - Shared initialization for jiaowu pages (toolbar, GA, site chrome)
+// jiaowu/init.js - 共享初始化（xk 登录页公告卡 / 公告拉取 / 版本升级）
 // Depends on: common/core.js (pjw global), jQuery ($$)
 
 window.potatojw_intl = function() {
   if (pjw.initialized) return;
   pjw.initialized = true;
-  
+
   if (typeof jQuery === "undefined") return;
   if (jQuery.fn.jquery == "3.5.1")
     window.$$ = jQuery.noConflict();
@@ -22,96 +22,6 @@ window.potatojw_intl = function() {
   if (pjw.mode == "") return;
   console.log(pjw.mode + " mode activated");
 
-  const custom_toolbar_html = {
-  };
-
-  // PJW Toolbar for specific pages
-  if (pjw.mode in custom_toolbar_html) {
-    $$("body").append(`<div id='pjw-toolbar'><div id="pjw-toolbar-content">` +
-      custom_toolbar_html[pjw.mode]
-    + `<div class="about-proj"></div></div></div>`);
-
-    const toolbar_button_html = `
-      <div id="pjw-toolbar-collapse-bg"><canvas id="pjw-toolbar-collapse" width="30px" height="30px"></canvas></div>
-    `;
-    $$("#pjw-toolbar").prepend(toolbar_button_html);
-
-    const about_this_project = `
-      <span style="user-select: text;">PotatoPlus v` + pjw.version + `</span>
-    `;
-    $$(".about-proj").html(about_this_project);
-
-    // Draw collapse button
-    var canvas = document.getElementById("pjw-toolbar-collapse");
-    window.ctx = canvas.getContext('2d');
-    ctx.fillStyle = "#63065f";
-
-    ctx.beginPath();
-    ctx.moveTo(6, 7);
-    ctx.lineTo(6, 23);
-    ctx.lineTo(7, 24);
-    ctx.lineTo(8, 23);
-    ctx.lineTo(8, 7);
-    ctx.lineTo(7, 6);
-    ctx.fill();
-    ctx.closePath();
-
-    ctx.beginPath();
-    ctx.moveTo(22, 6);
-    ctx.lineTo(9, 15);
-    ctx.lineTo(22, 24);
-    ctx.lineTo(23, 25);
-    ctx.lineTo(24, 24);
-    ctx.lineTo(12, 15);
-    ctx.lineTo(24, 6);
-    ctx.lineTo(23, 5);
-    ctx.fill();
-    ctx.closePath();
-
-    // Collapse / Expand toolbar
-    function switchToolBar() {
-      if (pjw.preferences.is_toolbar_collapsed) expandToolBar();
-      else collapseToolBar();
-    }
-    function collapseToolBar() {
-      $$("#pjw-toolbar").css("left", "-100%");
-      $$("#pjw-toolbar-collapse-bg").css("background-color", "");
-      $$("#pjw-toolbar-collapse").css({
-        "position": "fixed",
-        "left": "30px",
-        "bottom": "30px",
-        "top": "calc(100% - 60px)",
-        "transform": "rotate(180deg)"
-      });
-      pjw.preferences.is_toolbar_collapsed = true;
-    }
-    if (pjw.preferences.is_toolbar_collapsed === true)
-      collapseToolBar();
-    $$("#pjw-toolbar-collapse-bg").on("click", switchToolBar);
-    $$("#pjw-toolbar-collapse").on("mousedown", () => { if (pjw.preferences.is_toolbar_collapsed === false) $$("#pjw-toolbar-collapse-bg").css("background-color", "rgba(255, 255, 255, 1.0)");} );
-    $$("#pjw-toolbar-collapse-bg").on("mousedown", () => { if (pjw.preferences.is_toolbar_collapsed === false) $$("#pjw-toolbar-collapse-bg").css("background-color", "rgba(255, 255, 255, 1.0)");} );
-
-    // Show toolbar
-    function expandToolBar() {
-      $$("#pjw-toolbar").css("left", "");
-      $$("#pjw-toolbar").css("opacity", "");
-      $$("#pjw-toolbar-collapse").css({
-        "position": "",
-        "left": "",
-        "bottom": "",
-        "top": "",
-        "transform": ""
-      });
-      pjw.preferences.is_toolbar_collapsed = false;
-    }
-  }
-
-  // Initialize ClassList
-  const pjw_classlist_mode_list = ["course"];
-  if (pjw_classlist_mode_list.includes(pjw.mode)) {
-    ClassListPlugin();
-  }
-
   // Storage upgrade upon version upgrade
   if ((pjw.data.version || 0) !== pjw.version) {
     if (localStorage.getItem("version")) {
@@ -124,15 +34,10 @@ window.potatojw_intl = function() {
     pjw.data.version = pjw.version;
   }
 
-  var enterMode = function(mode) {
-    window.pjw_select_mode = pjw.mode;
-    class_select_funcs[mode]();
-  }
-
   var getBulletin = function() {
     if ((pjw.data.bulletin_update_timestamp || 0) + 300000 <= new Date().getTime()) {
       const html = `<iframe src="https://potatoplus.zcec.top/apps/potatoplus-bulletin/?version=${pjw.version}&site=${pjw.site}" width="300" height="300" style="display: none;"></iframe>`;
-    
+
       $$(window).on("message", (e) => {
         if (e.originalEvent.origin !== "https://potatoplus.zcec.top") return;
         if (e?.originalEvent?.data) {
@@ -157,15 +62,11 @@ window.potatojw_intl = function() {
     }
   }
 
-  // Dispatch to feature-specific modules
+  // Dispatch to feature-specific modules（course 模式已移除，只保留 welcome）
   if (pjw.mode == "welcome") {
-    // xk/welcome.js handles this
     if (typeof initXKWelcome === "function") {
       initXKWelcome(getBulletin);
     }
-  } else if (pjw.mode == "course") {
-    // xk/course.js handles this
-    pjw.featureOn("xk.beautify") && enterMode("course");
   } else {
     return;
   }
