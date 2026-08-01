@@ -132,7 +132,8 @@
     "*://ehall.nju.edu.cn/*",
     "*://ams.nju.edu.cn/*",
     "*://lms.nju.edu.cn/*",
-    "*://potatoplus.zcec.top/*"
+    "*://potatoplus.zcec.top/*",
+    "https://njuclass.zcec.top/*"
   ],
   "browser_specific_settings": {
     "gecko": {

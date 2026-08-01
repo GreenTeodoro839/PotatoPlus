@@ -19,6 +19,9 @@ const FEATURES = [
       desc: "课程列表增强、本地搜索/拼音、筛选、收藏", default: true },
     { key: "xk.captcha", name: "验证码自动识别",
       desc: "xk 登录点选验证码本地自动识别（可独立关闭）", default: true },
+    { key: "xk.hongheibang", name: "选课平台红黑榜",
+      desc: "原生教学班卡片上显示教师组红黑榜评分（仅在「美化」关闭时可用）", default: true,
+      showWhen: function (s) { return s["xk.beautify"] === false; } },
   ]},
   { group: "ehall 子页面", items: [
     { key: "ehall.grade_visualizer", name: "成绩可视化",
@@ -83,6 +86,8 @@ function buildSwitch(selected) {
   return btn;
 }
 
+const conditionalRows = [];
+
 function buildRow(item, settings) {
   const row = el("div", "pp-row");
 
@@ -101,14 +106,28 @@ function buildRow(item, settings) {
   const mdcSwitch = new window.mdc.switchControl.MDCSwitch(btn);
   mdcSwitch.selected = selected;
 
-  // 点击后 MDC 已自动翻转 selected；重新读取存储并写入新状态（每次重读避免快速连点错乱）
+  // 条件显示：如红黑榜仅在「美化」关闭时出现
+  if (item.showWhen) {
+    conditionalRows.push({ row: row, item: item });
+    if (!item.showWhen(settings)) row.style.display = "none";
+  }
+
+  // 点击后 MDC 已自动翻转 selected；重新读取存储并写入新状态，再刷新条件行可见性
   btn.addEventListener("click", async () => {
     const fresh = await loadSettings();
     fresh[item.key] = mdcSwitch.selected;
     await saveSettings(fresh);
+    refreshVisibility(fresh);
   });
 
   return row;
+}
+
+// 切换某开关后，重算所有带 showWhen 的行（美化开关联动红黑榜行的显隐）
+function refreshVisibility(settings) {
+  conditionalRows.forEach(function (cr) {
+    cr.row.style.display = cr.item.showWhen(settings) ? "" : "none";
+  });
 }
 
 function buildGroup(group) {
@@ -204,6 +223,7 @@ async function init() {
   const settings = await loadSettings();
   const root = document.getElementById("pp-options-groups");
   root.innerHTML = "";
+  conditionalRows.length = 0; // 重新渲染前清掉旧引用
   for (const g of FEATURES) {
     const sec = buildGroup(g);
     const list = sec.querySelector(".pp-group__list");

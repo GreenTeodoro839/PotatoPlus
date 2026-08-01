@@ -3,17 +3,22 @@
 
 if (!globalThis.browser) globalThis.browser = globalThis.chrome;
 
+// 红黑榜：NjuClassCore(core.js) + njuclass API(api.js)。api.js 监听 njuclass:* 消息调 njuclass.zcec.top。
+importScripts("njuclass/core.js", "njuclass/api.js");
+
 // 点击工具栏图标 → 打开设置页（未设 default_popup，故 onClicked 会触发）
 browser.action.onClicked.addListener(function () {
   browser.runtime.openOptionsPage();
 });
 
-// 站点级动态注册：ams / lms 的开关控制其内容脚本(JS+CSS)是否注册。
-// 注册 → 浏览器注入；注销 → 该站点完全不碰（无 JS、无 CSS、无脚本内判断）。
+// 站点级动态注册：开关控制内容脚本(JS+CSS)是否注册。注册 → 浏览器注入；注销 → 该站点完全不碰。
+// 默认按 settingKey（on = !==false）；带 when 的条目（如红黑榜）按自定义条件注册。
 var PP_SETTINGS_KEY = "potatoplus_settings";
 var DYNAMIC_SCRIPTS = [
   { id: "potatoplus_ams", settingKey: "ams.beautify", matches: ["*://ams.nju.edu.cn/*"], css: ["css/ams-global.css"], js: ["js/inject.js"], runAt: "document_start", allFrames: true },
   { id: "potatoplus_lms", settingKey: "lms.speedup", matches: ["*://lms.nju.edu.cn/*"], css: ["css/lms.css"], js: ["js/lms/home.js"], runAt: "document_start", allFrames: true },
+  // 红黑榜：给原生选课界面用，只在「美化关闭(xk.beautify) + 红黑榜开启」时注入（document_idle，顶层框架）
+  { id: "potatoplus_njuclass", matches: ["https://xk.nju.edu.cn/xsxkapp/*"], css: ["css/njuclass.css"], js: ["js/njuclass/core.js", "js/njuclass/content.js"], runAt: "document_idle", allFrames: false, when: function (s) { return s["xk.beautify"] === false && s["xk.hongheibang"] !== false; } },
 ];
 var LMS_DNR_RULESET = "lms_chatbot_block"; // chatbot 拦截规则集，跟 lms.speedup 绑定
 async function pp_getSettings() {
@@ -27,7 +32,7 @@ async function pp_syncDynamicScripts(settings) {
   registered.forEach(function (s) { have[s.id] = true; });
   var toAdd = [], toRemove = [];
   DYNAMIC_SCRIPTS.forEach(function (def) {
-    var on = settings[def.settingKey] !== false;
+    var on = def.when ? def.when(settings) : (settings[def.settingKey] !== false);
     if (on && !have[def.id]) toAdd.push({ id: def.id, matches: def.matches, css: def.css, js: def.js, runAt: def.runAt, allFrames: def.allFrames });
     if (!on && have[def.id]) toRemove.push(def.id);
   });
